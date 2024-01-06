@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test img web manager</title>
+</head>
+
+<body>
+  <img src="http://127.0.0.1:8080/img/asdf">
+  <input type="file" id="imageInput" accept="image/*">
+  <input type="text" id="chapterIdInput" placeholder="Chapter ID">
+  <button onclick="uploadImage()">Bild hochladen</button>
+</body>
+<script>
+  function uploadImage() {
+    const imageInput = document.getElementById('imageInput');
+    const chapterIdInput = document.getElementById('chapterIdInput');
+
+    const file = imageInput.files[0];
+    const chapterId = chapterIdInput.value;
+
+    if (!file || !chapterId) {
+      alert('Bitte wähle ein Bild aus und gib eine Chapter ID ein.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('chapter-id', chapterId);
+
+    fetch('http://127.0.0.1:8080/upload', {
+      method: 'POST',
+      body: {},
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Fehler beim Upload: ${response.status} - ${response.statusText}`);
+        }
+        return null;
+      })
+      .then(data => {
+        console.log('Erfolgreich hochgeladen:', data);
+      })
+      .catch(error => {
+        console.error('Fehler:', error);
+      });
+  }
+</script>
+
+</html>
