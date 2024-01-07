@@ -46,10 +46,15 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-#[get("/img/{filename}")]
-async fn get_img(info: web::Path<(String,)>) -> impl Responder {
-    let filename = format!("{}{}", sanitize(&info.0), ".jpg");
-    let file_path = Path::new(IMG_STORAGE_PATH).join(&filename);
+#[get("/img/{config_id}/{chapter_id}/{filename}")]
+async fn get_img(info: web::Path<(String, String, String)>) -> impl Responder {
+    let config_id = sanitize(&info.0);
+    let chapter_id = sanitize(&info.1);
+    let filename = sanitize(&info.2);
+    let file_path = Path::new(IMG_STORAGE_PATH)
+        .join(config_id)
+        .join(chapter_id)
+        .join(&filename);
 
     // Open file
     let Ok(mut file) = File::open(&file_path) else {
