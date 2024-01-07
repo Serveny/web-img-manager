@@ -8,3 +8,9 @@ edition = "2021"
 [dependencies]
 actix-web = "4"
 sanitize-filename = "0.5"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.21"
+image = "0.24"
+uuid = { version = "1.6", features = ["v4"] }
+actix-cors = "0.7.0"
+env_logger = "0.10.1"

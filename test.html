@@ -12,11 +12,23 @@
   <button onclick="uploadImage()">Bild hochladen</button>
 </body>
 <script>
-  function uploadImage() {
+  async function readFile(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => resolve(ev.target?.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadImage() {
     const imageInput = document.getElementById('imageInput');
     const chapterIdInput = document.getElementById('chapterIdInput');
 
-    const file = imageInput.files[0];
+    const file = await readFile(imageInput.files[0])
+    if (file == null) {
+      console.error("File is null")
+      return;
+    }
     const chapterId = chapterIdInput.value;
 
     if (!file || !chapterId) {
@@ -24,13 +36,17 @@
       return;
     }
 
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('chapter-id', chapterId);
-
     fetch('http://127.0.0.1:8080/upload', {
       method: 'POST',
-      body: {},
+      body: JSON.stringify({
+        config_id: 'config-1',
+        chapter_id: chapterId,
+        image_base64: file,
+      }),
+      crossDomain: true,
+      xhrFields: {
+        withCredentials: false,
+      },
     })
       .then(response => {
         if (!response.ok) {
