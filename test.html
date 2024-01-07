@@ -6,10 +6,12 @@
 </head>
 
 <body>
-  <img src="http://127.0.0.1:8080/img/asdf">
-  <input type="file" id="imageInput" accept="image/*">
-  <input type="text" id="chapterIdInput" placeholder="Chapter ID">
-  <button onclick="uploadImage()">Bild hochladen</button>
+  <img src="http://127.0.0.1:8080/img/config-1/test-1/acf0c97d-6ce7-4250-808c-3db6e2049cf4.jpg">
+  <div>
+    <input type="file" id="imageInput" accept="image/*">
+    <input type="text" id="chapterIdInput" placeholder="Chapter ID">
+    <button onclick="uploadImage()">Bild hochladen</button>
+  </div>
 </body>
 <script>
   async function readFile(file) {
@@ -25,28 +27,23 @@
     const chapterIdInput = document.getElementById('chapterIdInput');
 
     const file = await readFile(imageInput.files[0])
-    if (file == null) {
-      console.error("File is null")
-      return;
-    }
     const chapterId = chapterIdInput.value;
 
-    if (!file || !chapterId) {
+    if (file == null || chapterId == null) {
       alert('Bitte wähle ein Bild aus und gib eine Chapter ID ein.');
       return;
     }
 
     fetch('http://127.0.0.1:8080/upload', {
       method: 'POST',
-      body: JSON.stringify({
-        config_id: 'config-1',
-        chapter_id: chapterId,
-        image_base64: file,
-      }),
-      crossDomain: true,
-      xhrFields: {
-        withCredentials: false,
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        config_id: "config1",
+        chapter_id: chapterId,
+        image: file,
+      }),
     })
       .then(response => {
         if (!response.ok) {

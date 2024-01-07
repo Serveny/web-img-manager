@@ -1499,6 +1499,7 @@ dependencies = [
  "base64",
  "env_logger",
  "image",
+ "regex",
  "sanitize-filename",
  "serde",
  "uuid",
