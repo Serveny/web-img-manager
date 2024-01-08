@@ -1,27 +1,36 @@
 use crate::utils::{base64_to_img, resize_image, save_img};
 use actix_cors::Cors;
 use actix_web::{
-    delete, get,
-    http::header,
-    middleware::Logger,
-    options, post,
-    web::{self},
-    App, HttpResponse, HttpServer, Responder,
+    delete, error, get, http::header, middleware::Logger, options, post, web, App, HttpResponse,
+    HttpServer, Responder,
 };
 use sanitize_filename::sanitize;
 use serde::Deserialize;
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::{read_dir, File},
+    io::Read,
+    path::Path,
+};
 
 mod utils;
 
-pub const IMG_STORAGE_PATH: &str = ".\\img-test-storage";
+pub const IMG_STORAGE_PATH: &str = "./img-test-storage";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
 
     HttpServer::new(|| {
+        // custom `Json` extractor configuration
+        let json_cfg = web::JsonConfig::default()
+            // limit request payload size
+            .limit(10 * 1024 * 1024) // 10MB
+            // use custom error handler
+            .error_handler(|err, _| {
+                error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
+            });
         App::new()
+            .app_data(json_cfg)
             .wrap(
                 Cors::default()
                     .allowed_methods(vec!["GET", "POST"])
@@ -36,6 +45,7 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .wrap(Logger::default())
+            .service(get_chapter_img_list)
             .service(get_img)
             .service(handle_options)
             .service(upload_img)
@@ -44,6 +54,27 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
+}
+
+#[get("/list/{config_id}/{chapter_id}")]
+async fn get_chapter_img_list(info: web::Path<(String, String)>) -> impl Responder {
+    let config_id = sanitize(&info.0);
+    let chapter_id = sanitize(&info.1);
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(config_id).join(chapter_id);
+    let filenames = read_dir(folder_path)
+        .ok()
+        .map(|entries| {
+            entries
+                .filter_map(|entry| {
+                    entry
+                        .ok()
+                        .map(|e| e.file_name().to_string_lossy().into_owned())
+                })
+                .collect()
+        })
+        .unwrap_or_else(Vec::new);
+
+    HttpResponse::Ok().json(filenames)
 }
 
 #[get("/img/{config_id}/{chapter_id}/{filename}")]
