@@ -1,4 +1,4 @@
-use crate::utils::{base64_to_img, resize_image, save_img};
+use crate::utils::{base64_to_img, get_filenames, resize_image, save_img};
 use actix_cors::Cors;
 use actix_web::{
     delete, error, get, http::header, middleware::Logger, options, post, web, App, HttpResponse,
@@ -6,11 +6,7 @@ use actix_web::{
 };
 use sanitize_filename::sanitize;
 use serde::Deserialize;
-use std::{
-    fs::{read_dir, File},
-    io::Read,
-    path::Path,
-};
+use std::{fs::File, io::Read, path::Path};
 
 mod utils;
 
@@ -61,18 +57,7 @@ async fn get_chapter_img_list(info: web::Path<(String, String)>) -> impl Respond
     let config_id = sanitize(&info.0);
     let chapter_id = sanitize(&info.1);
     let folder_path = Path::new(IMG_STORAGE_PATH).join(config_id).join(chapter_id);
-    let filenames = read_dir(folder_path)
-        .ok()
-        .map(|entries| {
-            entries
-                .filter_map(|entry| {
-                    entry
-                        .ok()
-                        .map(|e| e.file_name().to_string_lossy().into_owned())
-                })
-                .collect()
-        })
-        .unwrap_or_else(Vec::new);
+    let filenames = get_filenames(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
@@ -124,7 +109,6 @@ async fn upload_img(payload: web::Json<UploadRequest>) -> impl Responder {
     let request = payload.0;
     let config_id = sanitize(&request.config_id);
     let chapter_id = sanitize(&request.chapter_id);
-    println!("{} - {}", &request.config_id, &request.chapter_id);
 
     // Read image
     let img = match base64_to_img(request.image.as_str()) {

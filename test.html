@@ -8,7 +8,6 @@
 <body>
   <div>
     <input type="file" id="imageInput" accept="image/*">
-    <input type="text" id="chapterIdInput" placeholder="Chapter ID">
     <button onclick="uploadImage()">Bild hochladen</button>
   </div>
   <div></div>
@@ -49,7 +48,6 @@
     const imageInput = document.getElementById('imageInput');
 
     const file = await readFile(imageInput.files[0])
-    const chapterId = chapterIdInput.value;
 
     if (file == null) {
       alert('Bitte wähle ein Bild aus und gib eine Chapter ID ein.');

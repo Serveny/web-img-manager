@@ -2,8 +2,10 @@ use crate::IMG_STORAGE_PATH;
 use base64::{engine::general_purpose::STANDARD as Base64, Engine};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use regex::Regex;
-use std::{fs::create_dir_all, path::Path};
-use uuid::Uuid;
+use std::{
+    fs::{self, create_dir_all},
+    path::{Path, PathBuf},
+};
 
 pub fn base64_to_img<'a>(base64_img: &'a str) -> Result<DynamicImage, &'static str> {
     // Format
@@ -40,7 +42,7 @@ pub fn save_img(
     thumb_img: DynamicImage,
     config_id: &str,
     chapter_id: &str,
-) -> Result<Uuid, String> {
+) -> Result<u32, String> {
     // Check storage path
     let storage_path = Path::new(IMG_STORAGE_PATH);
     if !storage_path.exists() {
@@ -54,7 +56,18 @@ pub fn save_img(
     }
 
     // Save images
-    let img_id = Uuid::new_v4();
+    let img_id = get_filenames(&img_folder_path)
+        .iter()
+        .map(|name| {
+            (*name)
+                .to_lowercase()
+                .trim_matches(|c: char| !c.is_numeric())
+                .parse::<u32>()
+                .unwrap_or(0)
+        })
+        .max()
+        .unwrap_or(0)
+        + 1;
 
     let img_path = img_folder_path.join(format!("{}.jpg", img_id));
     if let Err(err) = img.save_with_format(img_path, ImageFormat::Jpeg) {
@@ -67,4 +80,19 @@ pub fn save_img(
     }
 
     Ok(img_id)
+}
+
+pub fn get_filenames(folder_path: &PathBuf) -> Vec<String> {
+    fs::read_dir(folder_path)
+        .ok()
+        .map(|entries| {
+            entries
+                .filter_map(|entry| {
+                    entry
+                        .ok()
+                        .map(|e| e.file_name().to_string_lossy().into_owned())
+                })
+                .collect()
+        })
+        .unwrap_or_else(Vec::new)
 }
