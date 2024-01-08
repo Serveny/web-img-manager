@@ -14,13 +14,14 @@
   <div></div>
 </body>
 <script>
-  const server = "http://127.0.0.1:8080"
-  const config_id = "config-1";
+  const server = "127.0.0.1:8080"
+  const room_id = "config-1";
   const chapter_id = "chapter-1";
+  const socket = subscribeNotifications();
   readImageList();
 
   function readImageList() {
-    fetch(`${server}/list/${config_id}/${chapter_id}`)
+    fetch(`http://${server}/list/${room_id}/${chapter_id}`)
       .then((response) => {
         if (!response.ok) throw new Error(`Fehler beim Laden der Liste: ${response.status} - ${response.statusText}`);
         return response.json();
@@ -28,7 +29,7 @@
         const divs = document.getElementsByTagName("div")
         for (const imgSrc of data) {
           const imgEl = document.createElement("img");
-          imgEl.src = `${server}/img/${config_id}/${chapter_id}/${imgSrc}`;
+          imgEl.src = `http://${server}/img/${room_id}/${chapter_id}/${imgSrc}`;
           imgEl.style = "float:left; max-width: 100%";
           if (imgSrc.includes("thumb")) divs[1].append(imgEl);
           else divs[2].append(imgEl);
@@ -54,13 +55,13 @@
       return;
     }
 
-    fetch('http://127.0.0.1:8080/upload', {
+    fetch(`http://${server}/upload`, {
       method: 'POST',
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        config_id: config_id,
+        room_id: room_id,
         chapter_id: chapter_id,
         image: file,
       }),
@@ -77,6 +78,27 @@
       .catch(error => {
         console.error('Fehler:', error);
       });
+  }
+
+  function subscribeNotifications() {
+    // WebSocket-Verbindung aufbauen
+    const socket = new WebSocket(`ws://${server}/ws/`);
+
+    // Eventlistener für Verbindungsöffnen
+    socket.addEventListener('open', (event) => {
+      console.log('WebSocket-Verbindung geöffnet:', event);
+    });
+
+    // Eventlistener für Verbindungsfehler
+    socket.addEventListener('error', (event) => {
+      console.error('Fehler bei der WebSocket-Verbindung:', event);
+    });
+
+    // Eventlistener für Verbindungsabbrechen
+    socket.addEventListener('close', (event) => {
+      console.log('WebSocket-Verbindung geschlossen:', event);
+    });
+    return socket;
   }
 </script>
 

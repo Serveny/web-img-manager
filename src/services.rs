@@ -1,29 +1,32 @@
 use crate::{
+    config::IMG_STORAGE_PATH,
+    notifications,
     utils::{base64_to_img, get_filenames, resize_image, save_img},
-    IMG_STORAGE_PATH,
 };
-use actix_web::{delete, get, http::header, options, post, web, HttpResponse, Responder};
+use actix_web::{
+    delete, get, http::header, options, post, web, HttpRequest, HttpResponse, Responder,
+};
 use sanitize_filename::sanitize;
 use serde::Deserialize;
 use std::{fs::File, io::Read, path::Path};
 
-#[get("/list/{config_id}/{chapter_id}")]
+#[get("/list/{room_id}/{chapter_id}")]
 pub async fn get_chapter_img_list(info: web::Path<(String, String)>) -> impl Responder {
-    let config_id = sanitize(&info.0);
+    let room_id = sanitize(&info.0);
     let chapter_id = sanitize(&info.1);
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(config_id).join(chapter_id);
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(room_id).join(chapter_id);
     let filenames = get_filenames(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
 
-#[get("/img/{config_id}/{chapter_id}/{filename}")]
+#[get("/img/{room_id}/{chapter_id}/{filename}")]
 pub async fn get_img(info: web::Path<(String, String, String)>) -> impl Responder {
-    let config_id = sanitize(&info.0);
+    let room_id = sanitize(&info.0);
     let chapter_id = sanitize(&info.1);
     let filename = sanitize(&info.2);
     let file_path = Path::new(IMG_STORAGE_PATH)
-        .join(config_id)
+        .join(room_id)
         .join(chapter_id)
         .join(&filename);
 
@@ -54,15 +57,15 @@ pub async fn handle_options() -> impl Responder {
 
 #[derive(Deserialize)]
 pub struct UploadRequest {
-    config_id: String,
+    room_id: String,
     chapter_id: String,
     image: String,
 }
 
 #[post("/upload")]
-pub async fn upload_img(payload: web::Json<UploadRequest>) -> impl Responder {
+pub async fn upload_img(req: HttpRequest, payload: web::Json<UploadRequest>) -> impl Responder {
     let request = payload.0;
-    let config_id = sanitize(&request.config_id);
+    let room_id = sanitize(&request.room_id);
     let chapter_id = sanitize(&request.chapter_id);
 
     // Read image
@@ -76,10 +79,13 @@ pub async fn upload_img(payload: web::Json<UploadRequest>) -> impl Responder {
     let thumb_img = resize_image(img.clone(), 600, 200);
 
     // Save images
-    let img_id = match save_img(img, thumb_img, &config_id, &chapter_id) {
+    let img_id = match save_img(img, thumb_img, &room_id, &chapter_id) {
         Ok(id) => id,
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
+
+    // Notify users
+    notifications::notify_upload(req, room_id);
 
     // Send image id back
     HttpResponse::Ok()

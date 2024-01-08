@@ -1,4 +1,4 @@
-use crate::IMG_STORAGE_PATH;
+use crate::config::IMG_STORAGE_PATH;
 use base64::{engine::general_purpose::STANDARD as Base64, Engine};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use regex::Regex;
@@ -40,7 +40,7 @@ pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> Dynam
 pub fn save_img(
     img: DynamicImage,
     thumb_img: DynamicImage,
-    config_id: &str,
+    room_id: &str,
     chapter_id: &str,
 ) -> Result<u32, String> {
     // Check storage path
@@ -50,7 +50,7 @@ pub fn save_img(
     }
 
     // Check image folder
-    let img_folder_path = storage_path.join(config_id).join(chapter_id);
+    let img_folder_path = storage_path.join(room_id).join(chapter_id);
     if !img_folder_path.exists() && create_dir_all(&img_folder_path).is_err() {
         return Err(String::from("Could not create image folder"));
     }
