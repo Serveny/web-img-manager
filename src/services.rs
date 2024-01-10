@@ -1,11 +1,9 @@
 use crate::{
     config::IMG_STORAGE_PATH,
-    notifications,
+    notifications::{NotificationMessage, NotificationServer},
     utils::{base64_to_img, get_filenames, resize_image, save_img},
 };
-use actix_web::{
-    delete, get, http::header, options, post, web, HttpRequest, HttpResponse, Responder,
-};
+use actix_web::{delete, get, http::header, options, post, web, HttpResponse, Responder};
 use sanitize_filename::sanitize;
 use serde::Deserialize;
 use std::{fs::File, io::Read, path::Path};
@@ -63,7 +61,10 @@ pub struct UploadRequest {
 }
 
 #[post("/upload")]
-pub async fn upload_img(req: HttpRequest, payload: web::Json<UploadRequest>) -> impl Responder {
+pub async fn upload_img(
+    payload: web::Json<UploadRequest>,
+    notification: web::Data<NotificationServer>,
+) -> impl Responder {
     let request = payload.0;
     let room_id = sanitize(&request.room_id);
     let chapter_id = sanitize(&request.chapter_id);
@@ -84,8 +85,11 @@ pub async fn upload_img(req: HttpRequest, payload: web::Json<UploadRequest>) -> 
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
 
-    // Notify users
-    notifications::notify_upload(req, room_id);
+    // Notify users about image upload
+    notification.send_message(
+        &room_id,
+        NotificationMessage::ImageUpload { chapter_id, img_id },
+    );
 
     // Send image id back
     HttpResponse::Ok()

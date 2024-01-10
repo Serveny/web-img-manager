@@ -1,12 +1,9 @@
+use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{error, http::header, middleware::Logger, web, App, HttpResponse, HttpServer};
 use config::SERVER;
-use notifications::Rooms;
+use notifications::NotificationServer;
 use services::{delete_img, get_chapter_img_list, get_img, handle_options, upload_img};
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
 
 mod config;
 mod notifications;
@@ -24,9 +21,6 @@ async fn main() -> std::io::Result<()> {
             .error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
             });
-
-        // HashMap to save all notification subscriber
-        let rooms: Arc<Mutex<Rooms>> = Arc::new(Mutex::new(HashMap::new()));
 
         // Create app
         App::new()
@@ -47,8 +41,8 @@ async fn main() -> std::io::Result<()> {
             )
             .app_data(json_cfg)
             // Notifications
-            .app_data(web::Data::new(rooms.clone()))
-            .route("/ws/", web::get().to(notifications::register_client))
+            .app_data(web::Data::new(NotificationServer::new().start()))
+            .route("/ws/{room_id}", web::get().to(notifications::join_room))
             // Services
             .service(get_chapter_img_list)
             .service(get_img)

@@ -82,7 +82,7 @@
 
   function subscribeNotifications() {
     // WebSocket-Verbindung aufbauen
-    const socket = new WebSocket(`ws://${server}/ws/`);
+    const socket = new WebSocket(`ws://${server}/ws/${room_id}`);
 
     // Eventlistener für Verbindungsöffnen
     socket.addEventListener('open', (event) => {

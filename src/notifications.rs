@@ -1,25 +1,120 @@
-use actix::{Actor, Addr, StreamHandler};
+use actix::prelude::*;
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{Arc, Mutex},
-};
+use rand::{rngs::ThreadRng, Rng};
+use std::collections::{HashMap, HashSet};
 
-pub type Rooms = HashMap<String, Room>;
-pub type Room = HashSet<Addr<NotificationsWs>>;
-
-/// Define HTTP actor
-pub struct NotificationsWs {
-    room_id: String,
+#[derive(actix::Message, Clone)]
+#[rtype(result = "()")]
+pub enum NotificationMessage {
+    ImageUpload { chapter_id: String, img_id: u32 },
 }
 
-impl Actor for NotificationsWs {
+#[derive(Debug)]
+pub struct NotificationServer {
+    sessions: HashMap<usize, Recipient<NotificationMessage>>,
+    rooms: HashMap<String, HashSet<usize>>,
+    rng: ThreadRng,
+}
+
+impl NotificationServer {
+    pub fn new() -> Self {
+        NotificationServer {
+            sessions: HashMap::new(),
+            rooms: HashMap::new(),
+            rng: rand::thread_rng(),
+        }
+    }
+
+    /// Send message to all users in the room
+    pub fn send_message(&self, room_id: &str, msg: NotificationMessage) {
+        let Some(room) = self.rooms.get(room_id) else {
+            return;
+        };
+        for id in room {
+            if let Some(addr) = self.sessions.get(id) {
+                addr.do_send(msg.clone());
+            }
+        }
+    }
+}
+
+/// Make actor from `NotificationServer`
+impl Actor for NotificationServer {
+    /// We are going to use simple Context, we just need ability to communicate
+    /// with other actors.
+    type Context = Context<Self>;
+}
+
+#[derive(Message)]
+#[rtype(usize)]
+pub struct Connect {
+    pub addr: Recipient<NotificationMessage>,
+    pub room_id: String,
+}
+
+/// Handler for Connect message.
+///
+/// Register new session and assign unique id to this session
+impl Handler<Connect> for NotificationServer {
+    type Result = usize;
+
+    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+        println!("Someone joined");
+        // register session with random id
+        let id = self.rng.gen::<usize>();
+        self.sessions.insert(id, msg.addr);
+
+        // auto join session to main room
+        self.rooms.entry(msg.room_id).or_default().insert(id);
+
+        // send id back
+        id
+    }
+}
+
+/// Session is disconnected
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Disconnect {
+    pub id: usize,
+}
+
+/// Handler for Disconnect message.
+impl Handler<Disconnect> for NotificationServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+        println!("Someone disconnected");
+
+        // remove address
+        if self.sessions.remove(&msg.id).is_some() {
+            // remove session from all rooms
+            for sessions in &mut self.rooms.values_mut() {
+                sessions.remove(&msg.id);
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct NotificationSession {
+    /// unique session id
+    pub id: usize,
+
+    /// joined room
+    pub room_id: String,
+
+    /// Chat server
+    pub addr: Addr<NotificationServer>,
+}
+
+impl Actor for NotificationSession {
     type Context = ws::WebsocketContext<Self>;
 }
 
 /// Handler for ws::Message message
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for NotificationsWs {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for NotificationSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
@@ -30,23 +125,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for NotificationsWs {
     }
 }
 
-pub async fn register_client(
+/// Entry point for our websocket route
+pub async fn join_room(
     req: HttpRequest,
+    path: web::Path<(String,)>,
     stream: web::Payload,
-    room_id: String,
+    srv: web::Data<Addr<NotificationServer>>,
 ) -> Result<HttpResponse, Error> {
-    let resp = ws::start(NotificationsWs { room_id }, &req, stream);
-    println!("{:?}", resp);
-    resp
-}
-
-fn get_rooms(req: HttpRequest) -> Option<web::Data<Arc<Mutex<Rooms>>>> {
-    req.app_data::<web::Data<Arc<Mutex<Rooms>>>>()
-        .map(|r| r.clone())
-}
-
-pub fn notify_upload(req: HttpRequest, room_id: String) {
-    let Some(rooms) = get_rooms(req) else {
-        return;
-    };
+    ws::start(
+        NotificationSession {
+            id: 0,
+            room_id: path.0.clone(),
+            addr: srv.get_ref().clone(),
+        },
+        &req,
+        stream,
+    )
 }

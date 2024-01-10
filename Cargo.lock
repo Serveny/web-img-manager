@@ -1564,6 +1564,7 @@ dependencies = [
  "base64",
  "env_logger",
  "image",
+ "rand",
  "regex",
  "sanitize-filename",
  "serde",
