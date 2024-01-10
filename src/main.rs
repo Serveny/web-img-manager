@@ -26,19 +26,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             // config
             .wrap(Logger::default())
-            .wrap(
-                Cors::default()
-                    .allowed_methods(vec!["GET", "POST"])
-                    .allowed_headers(vec![
-                        header::AUTHORIZATION,
-                        header::ACCEPT,
-                        header::CONTENT_TYPE,
-                        header::CONTENT_LENGTH,
-                    ])
-                    .allow_any_origin()
-                    .supports_credentials()
-                    .max_age(3600),
-            )
+            .wrap(cors_cfg())
             .app_data(json_cfg)
             // Notifications
             .app_data(web::Data::new(NotificationServer::new().start()))
@@ -53,4 +41,18 @@ async fn main() -> std::io::Result<()> {
     .bind(SERVER)?
     .run()
     .await
+}
+
+fn cors_cfg() -> Cors {
+    Cors::default()
+        .allowed_methods(vec!["GET", "POST"])
+        .allowed_headers(vec![
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            header::CONTENT_TYPE,
+            header::CONTENT_LENGTH,
+        ])
+        .allow_any_origin()
+        .supports_credentials()
+        .max_age(3600)
 }
