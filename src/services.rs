@@ -6,7 +6,11 @@ use crate::{
 use actix_web::{delete, get, http::header, options, post, web, HttpResponse, Responder};
 use sanitize_filename::sanitize;
 use serde::Deserialize;
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::{self, File},
+    io::Read,
+    path::Path,
+};
 
 #[get("/list/{room_id}/{chapter_id}")]
 pub async fn get_chapter_img_list(info: web::Path<(String, String)>) -> impl Responder {
@@ -97,7 +101,40 @@ pub async fn upload_img(
         .body(img_id.to_string())
 }
 
-#[delete("/delete/{file}")]
-pub async fn delete_img() -> impl Responder {
-    HttpResponse::Ok()
+#[delete("/delete/{room_id}")]
+pub async fn delete_room(path: web::Path<(String,)>) -> impl Responder {
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(sanitize(&path.0));
+
+    if fs::remove_dir_all(&folder_path).is_err() {
+        return HttpResponse::NotFound().body(format!("Could not delete folder {:?}", folder_path));
+    }
+
+    HttpResponse::Ok().finish()
+}
+
+#[delete("/delete/{room_id}/{chapter_id}")]
+pub async fn delete_chapter(path: web::Path<(String, String)>) -> impl Responder {
+    let folder_path = Path::new(IMG_STORAGE_PATH)
+        .join(sanitize(&path.0))
+        .join(sanitize(&path.1));
+
+    if fs::remove_dir_all(&folder_path).is_err() {
+        return HttpResponse::NotFound().body(format!("Could not delete folder {:?}", folder_path));
+    }
+
+    HttpResponse::Ok().finish()
+}
+
+#[delete("/delete/{room_id}/{chapter_id}/{file}")]
+pub async fn delete_img(path: web::Path<(String, String, String)>) -> impl Responder {
+    let file_path = Path::new(IMG_STORAGE_PATH)
+        .join(sanitize(&path.0))
+        .join(sanitize(&path.1))
+        .join(sanitize(&path.2));
+
+    if fs::remove_file(&file_path).is_err() {
+        return HttpResponse::NotFound().body(format!("Could not delete file {:?}", file_path));
+    }
+
+    HttpResponse::Ok().finish()
 }
