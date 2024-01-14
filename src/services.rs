@@ -3,13 +3,20 @@ use crate::{
     notifications::{NotificationMessage, NotificationServer},
     utils::{append_on_filename, base64_to_img, get_filenames, resize_image, save_img},
 };
-use actix_web::{get, http::header, options, post, web, HttpResponse, Responder};
+use actix_web::{
+    get,
+    http::header,
+    options, post,
+    web::{self, Data, Json},
+    HttpResponse, Responder,
+};
 use sanitize_filename::sanitize;
 use serde::Deserialize;
 use std::{
     fs::{self, File},
     io::Read,
     path::Path,
+    sync::Mutex,
 };
 
 #[get("/list/{room_id}/{chapter_id}")]
@@ -66,8 +73,8 @@ pub struct UploadRequest {
 
 #[post("/upload")]
 pub async fn upload_img(
-    payload: web::Json<UploadRequest>,
-    // notification: web::Data<NotificationServer>,
+    payload: Json<UploadRequest>,
+    notification: Data<Mutex<NotificationServer>>,
 ) -> impl Responder {
     let request = payload.0;
     let room_id = sanitize(&request.room_id);
@@ -90,10 +97,10 @@ pub async fn upload_img(
     };
 
     // Notify users about image upload
-    //notification.send_message(
-    //&room_id,
-    //NotificationMessage::ImageUpload { chapter_id, img_id },
-    //);
+    if let Ok(notification_server) = notification.lock() {
+        let msg = NotificationMessage::ImageUpload { chapter_id, img_id };
+        notification_server.send_message(&room_id, msg);
+    }
 
     // Send image id back
     HttpResponse::Ok()

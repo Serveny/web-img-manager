@@ -13,14 +13,14 @@
     <button onclick="deleteOnServer(room_id, chapter_id)">Delete chapter</button>
     <button
       onclick="deleteOnServer(room_id, chapter_id, document.getElementsByTagName('img')[0].getAttribute('data-img-name'))">Delete
-      image</button>
+      first image</button>
   </div>
   <div></div>
   <div></div>
 </body>
 <script>
   const server = "127.0.0.1:8080"
-  const room_id = "config-1";
+  const room_id = "room-1";
   const chapter_id = "chapter-1";
   const socket = subscribeNotifications();
   readImageList();

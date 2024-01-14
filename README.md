@@ -4,18 +4,18 @@ Little project to up and download image files to/from an actix rust server and g
 
 ## Features
 
-- [x] upload image
-- [x] convert image into big and thumb/preview images
-- [x] save files in structured folder (room_id/chapter_id/img_name)
-- [x] delete room & chapter folders
-- [x] delete images
-- [ ] upload live notification
-- [ ] delete live notification
-- [ ] live chat
+- [x] ☁️ upload image
+- [x] 🖼️ convert image into big and thumb/preview images
+- [x] 📁 save files in structured folder (room_id/chapter_id/img_name)
+- [x] ❌ delete room & chapter folders
+- [x] ❌ delete images
+- [ ] 📰 upload live notification
+- [ ] 📰 delete live notification
+- [ ] 💬 live chat
 
 ## API
 
-### 1. **get image name list**
+### 1. `get image name list`
 
 **Endpoint**
 
@@ -25,7 +25,7 @@ Little project to up and download image files to/from an actix rust server and g
 **Parameters:** None  
 **Returns:** JSON encoded list of filenames (example: `["1.jpg","1_thumb.jpg","2.jpg","2_thumb.jpg"]`)
 
-### 2. **get image**
+### 2. `get image`
 
 **Endpoint**
 

@@ -1,5 +1,8 @@
 use actix::prelude::*;
-use actix_web::{web, Error, HttpRequest, HttpResponse};
+use actix_web::{
+    web::{self, Data},
+    Error, HttpRequest, HttpResponse,
+};
 use actix_web_actors::ws;
 use rand::{rngs::ThreadRng, Rng};
 use std::collections::{HashMap, HashSet};
@@ -105,8 +108,7 @@ pub struct NotificationSession {
     /// joined room
     pub room_id: String,
 
-    /// Chat server
-    pub addr: Addr<NotificationServer>,
+    pub srv: Data<Addr<NotificationServer>>,
 }
 
 impl Actor for NotificationSession {
@@ -116,6 +118,7 @@ impl Actor for NotificationSession {
 /// Handler for ws::Message message
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for NotificationSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        println!("Session stated");
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
             Ok(ws::Message::Text(text)) => ctx.text(text),
@@ -126,17 +129,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for NotificationSessi
 }
 
 /// Entry point for our websocket route
-pub async fn join_room(
+pub async fn start_connection(
     req: HttpRequest,
     path: web::Path<(String,)>,
     stream: web::Payload,
-    srv: web::Data<Addr<NotificationServer>>,
+    srv: Data<Addr<NotificationServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
         NotificationSession {
             id: 0,
             room_id: path.0.clone(),
-            addr: srv.get_ref().clone(),
+            srv: srv.clone(),
         },
         &req,
         stream,

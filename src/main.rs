@@ -1,6 +1,12 @@
 use actix::Actor;
 use actix_cors::Cors;
-use actix_web::{error, http::header, middleware::Logger, web, App, HttpResponse, HttpServer};
+use actix_web::{
+    error,
+    http::header,
+    middleware::Logger,
+    web::{get, Data, JsonConfig},
+    App, HttpResponse, HttpServer,
+};
 use config::SERVER;
 use notifications::NotificationServer;
 use services::{
@@ -19,11 +25,14 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         // json configuration
-        let json_cfg = web::JsonConfig::default()
+        let json_cfg = JsonConfig::default()
             .limit(10 * 1024 * 1024) // limit request payload size to 10MB
             .error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
             });
+
+        // Live notifications server
+        let notify_server = NotificationServer::new().start();
 
         // Create app
         App::new()
@@ -32,8 +41,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors_cfg())
             .app_data(json_cfg)
             // Notifications
-            .app_data(web::Data::new(NotificationServer::new().start()))
-            .route("/ws/{room_id}", web::get().to(notifications::join_room))
+            .app_data(Data::new(notify_server))
+            .route("/ws/{room_id}", get().to(notifications::start_connection))
             // Services
             .service(get_chapter_img_list)
             .service(get_img)
