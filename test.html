@@ -32,15 +32,17 @@
         return response.json();
       }).then(data => {
         const divs = document.getElementsByTagName("div")
-        for (const imgSrc of data) {
-          const imgEl = document.createElement("img");
-          imgEl.src = `http://${server}/img/${room_id}/${chapter_id}/${imgSrc}`;
-          imgEl.setAttribute("data-img-name", imgSrc);
-          imgEl.style = "float:left; max-width: 100%";
-          if (imgSrc.includes("thumb")) divs[1].append(imgEl);
-          else divs[2].append(imgEl);
-        }
+        for (const imgSrc of data) addImg(imgSrc, divs);
       })
+  }
+
+  function addImg(imgSrc, divs) {
+    const imgEl = document.createElement("img");
+    imgEl.src = `http://${server}/img/${room_id}/${chapter_id}/${imgSrc}`;
+    imgEl.setAttribute("data-img-name", imgSrc);
+    imgEl.style = "float:left; max-width: 100%";
+    if (imgSrc.includes("thumb")) divs[1].append(imgEl);
+    else divs[2].append(imgEl);
   }
 
   async function readFile(file) {
