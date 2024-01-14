@@ -1,8 +1,10 @@
 use crate::{
     config::IMG_STORAGE_PATH,
-    notifications::{NotificationMessage, NotificationServer},
     utils::{append_on_filename, base64_to_img, get_filenames, resize_image, save_img},
+    ws::{messages::ImageUploaded, server::NotifyServer},
+    LobbyId, RoomId,
 };
+use actix::prelude::*;
 use actix_web::{
     get,
     http::header,
@@ -16,27 +18,27 @@ use std::{
     fs::{self, File},
     io::Read,
     path::Path,
-    sync::Mutex,
 };
+use uuid::Uuid;
 
-#[get("/list/{room_id}/{chapter_id}")]
-pub async fn get_chapter_img_list(info: web::Path<(String, String)>) -> impl Responder {
-    let room_id = sanitize(&info.0);
-    let chapter_id = sanitize(&info.1);
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(room_id).join(chapter_id);
+#[get("/list/{lobby_id}/{room_id}")]
+pub async fn get_room_img_list(info: web::Path<(LobbyId, RoomId)>) -> impl Responder {
+    let lobby_id = info.0.to_string();
+    let room_id = info.1.to_string();
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(lobby_id).join(room_id);
     let filenames = get_filenames(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
 
-#[get("/img/{room_id}/{chapter_id}/{filename}")]
-pub async fn get_img(info: web::Path<(String, String, String)>) -> impl Responder {
-    let room_id = sanitize(&info.0);
-    let chapter_id = sanitize(&info.1);
+#[get("/img/{lobby_id}/{room_id}/{filename}")]
+pub async fn get_img(info: web::Path<(LobbyId, RoomId, String)>) -> impl Responder {
+    let lobby_id = info.0.to_string();
+    let room_id = info.1.to_string();
     let filename = sanitize(&info.2);
     let file_path = Path::new(IMG_STORAGE_PATH)
+        .join(lobby_id)
         .join(room_id)
-        .join(chapter_id)
         .join(&filename);
 
     // Open file
@@ -66,19 +68,19 @@ pub async fn handle_options() -> impl Responder {
 
 #[derive(Deserialize)]
 pub struct UploadRequest {
-    room_id: String,
-    chapter_id: String,
+    lobby_id: LobbyId,
+    room_id: RoomId,
     image: String,
 }
 
 #[post("/upload")]
 pub async fn upload_img(
     payload: Json<UploadRequest>,
-    notification: Data<Mutex<NotificationServer>>,
+    notify: Data<Addr<NotifyServer>>,
 ) -> impl Responder {
     let request = payload.0;
-    let room_id = sanitize(&request.room_id);
-    let chapter_id = sanitize(&request.chapter_id);
+    let lobby_id = request.lobby_id;
+    let room_id = request.room_id;
 
     // Read image
     let img = match base64_to_img(request.image.as_str()) {
@@ -91,15 +93,17 @@ pub async fn upload_img(
     let thumb_img = resize_image(img.clone(), 600, 200);
 
     // Save images
-    let img_id = match save_img(img, thumb_img, &room_id, &chapter_id) {
+    let img_id = match save_img(img, thumb_img, &lobby_id, &room_id) {
         Ok(id) => id,
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
 
     // Notify users about image upload
-    if let Ok(notification_server) = notification.lock() {
-        let msg = NotificationMessage::ImageUpload { chapter_id, img_id };
-        notification_server.send_message(&room_id, msg);
+    if let Err(err) = notify
+        .send(ImageUploaded::new(lobby_id, room_id, img_id))
+        .await
+    {
+        println!("{}", err);
     }
 
     // Send image id back
@@ -108,9 +112,9 @@ pub async fn upload_img(
         .body(img_id.to_string())
 }
 
-#[post("/delete/{room_id}")]
-pub async fn delete_room(path: web::Path<(String,)>) -> impl Responder {
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(sanitize(&path.0));
+#[post("/delete/{lobby_id}")]
+pub async fn delete_lobby(path: web::Path<(Uuid,)>) -> impl Responder {
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(path.0.to_string());
 
     if fs::remove_dir_all(&folder_path).is_err() {
         return HttpResponse::InternalServerError()
@@ -120,11 +124,11 @@ pub async fn delete_room(path: web::Path<(String,)>) -> impl Responder {
     HttpResponse::Ok().finish()
 }
 
-#[post("/delete/{room_id}/{chapter_id}")]
-pub async fn delete_chapter(path: web::Path<(String, String)>) -> impl Responder {
+#[post("/delete/{lobby_id}/{room_id}")]
+pub async fn delete_room(path: web::Path<(Uuid, Uuid)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH)
-        .join(sanitize(&path.0))
-        .join(sanitize(&path.1));
+        .join(path.0.to_string())
+        .join(path.1.to_string());
 
     if fs::remove_dir_all(&folder_path).is_err() {
         return HttpResponse::InternalServerError()
@@ -134,11 +138,11 @@ pub async fn delete_chapter(path: web::Path<(String, String)>) -> impl Responder
     HttpResponse::Ok().finish()
 }
 
-#[post("/delete/{room_id}/{chapter_id}/{file}")]
-pub async fn delete_img(path: web::Path<(String, String, String)>) -> impl Responder {
+#[post("/delete/{lobby_id}/{room_id}/{file}")]
+pub async fn delete_img(path: web::Path<(Uuid, Uuid, String)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH)
-        .join(sanitize(&path.0))
-        .join(sanitize(&path.1));
+        .join(path.0.to_string())
+        .join(path.1.to_string());
 
     // Delete big image
     let filename = sanitize(&path.2).replace("_thumb", "");

@@ -1,13 +1,13 @@
 # Web Image Manager
 
-Little project to up and download image files to/from an actix rust server and get live notification with web sockets.
+Little project to up and download image files to/from an actix rust server and get live notification with web sockets. It is intended for a web application in which there are different lobbies, each of which has rooms where you can chat or share your pictures with others.
 
 ## Features
 
 - [x] ☁️ upload image
 - [x] 🖼️ convert image into big and thumb/preview images
-- [x] 📁 save files in structured folder (room_id/chapter_id/img_name)
-- [x] ❌ delete room & chapter folders
+- [x] 📁 save files in structured folder (lobby_id/room_id/img_name)
+- [x] ❌ delete lobby & room folders
 - [x] ❌ delete images
 - [ ] 📰 upload live notification
 - [ ] 📰 delete live notification
@@ -15,47 +15,40 @@ Little project to up and download image files to/from an actix rust server and g
 
 ## API
 
-### 1. `get image name list`
-
-**Endpoint**
-
-- Method: `GET`
-- URL: `/list/{room_id}/{chapter_id}`
-
-**Parameters:** None  
-**Returns:** JSON encoded list of filenames (example: `["1.jpg","1_thumb.jpg","2.jpg","2_thumb.jpg"]`)
-
-### 2. `get image`
-
-**Endpoint**
-
-- Method: `GET`
-- URL: `/img/{room_id}/{chapter_id}/{img_filename}`
-
-**Parameters:**: None  
-**Returns:** image file
-
-### 3. `upload`
-
-**Endpoint**
-
-- **Method:** `POST`
-- **URL:** `/upload`
-
-**Parameters**
-
-- `room_id`: String
-- `chapter_id`: String
-- `image`: Image as base64 encoded string
-
-**Returns:** image name as string (example: `3`)
-
-### 3. `delete`
-
-**Endpoint**
-
-- **Method:** `POST`
-- **URL:** `/delete/{room_id?}/{chapter_id?}/{img_filename?}`
-
-**Parameters:** None  
-**Returns:** OK or ERROR
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Method</th>
+    <th>URL</th>
+    <th>Parameters</th>
+    <th>Returns</th>
+  </tr>
+  <tr>
+    <td><code>get image name list</code></td>
+    <td>GET</td>
+    <td>/list/{lobby_id}/{room_id}</td>
+    <td>None</td>
+    <td>JSON encoded list of filenames</td>
+  </tr>
+  <tr>
+    <td><code>get image</code></td>
+    <td>GET</td>
+    <td>/img/{lobby_id}/{room_id}/{img_filename}</td>
+    <td>None</td>
+    <td>image file</td>
+  </tr>
+  <tr>
+    <td><code>upload</code></td>
+    <td>POST</td>
+    <td>/upload</td>
+    <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
+    <td>image name as string (example: <code>3</code>)</td>
+  </tr>
+  <tr>
+    <td><code>delete</code></td>
+    <td>POST</td>
+    <td>/delete/{lobby_id?}/{room_id?}/{img_filename?}</td>
+    <td>None</td>
+    <td>OK</td>
+  </tr>
+</table>

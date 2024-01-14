@@ -6,6 +6,7 @@ use std::{
     fs::{self, create_dir_all},
     path::{Path, PathBuf},
 };
+use uuid::Uuid;
 
 pub fn base64_to_img<'a>(base64_img: &'a str) -> Result<DynamicImage, &'static str> {
     // Format
@@ -40,8 +41,8 @@ pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> Dynam
 pub fn save_img(
     img: DynamicImage,
     thumb_img: DynamicImage,
-    room_id: &str,
-    chapter_id: &str,
+    lobby_id: &Uuid,
+    room_id: &Uuid,
 ) -> Result<u32, String> {
     // Check storage path
     let storage_path = Path::new(IMG_STORAGE_PATH);
@@ -50,7 +51,9 @@ pub fn save_img(
     }
 
     // Check image folder
-    let img_folder_path = storage_path.join(room_id).join(chapter_id);
+    let img_folder_path = storage_path
+        .join(lobby_id.to_string())
+        .join(room_id.to_string());
     if !img_folder_path.exists() && create_dir_all(&img_folder_path).is_err() {
         return Err(String::from("Could not create image folder"));
     }

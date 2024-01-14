@@ -9,10 +9,10 @@
   <div>
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="uploadImage()">Upload image</button>
-    <button onclick="deleteOnServer(room_id)">Delete room</button>
-    <button onclick="deleteOnServer(room_id, chapter_id)">Delete chapter</button>
+    <button onclick="deleteOnServer(lobby_id)">Delete lobby</button>
+    <button onclick="deleteOnServer(lobby_id, room_id)">Delete room</button>
     <button
-      onclick="deleteOnServer(room_id, chapter_id, document.getElementsByTagName('img')[0].getAttribute('data-img-name'))">Delete
+      onclick="deleteOnServer(lobby_id, room_id, document.getElementsByTagName('img')[0].getAttribute('data-img-name'))">Delete
       first image</button>
   </div>
   <div></div>
@@ -20,15 +20,15 @@
 </body>
 <script>
   const server = "127.0.0.1:8080"
-  const room_id = "room-1";
-  const chapter_id = "chapter-1";
+  const lobby_id = "6a766d31-71d5-4a34-8df5-124b9614b19f";
+  const room_id = "dbc64507-38fa-45e4-ad4b-197a4961bfa6";
   const socket = subscribeNotifications();
   readImageList();
 
   function readImageList() {
-    fetch(`http://${server}/list/${room_id}/${chapter_id}`)
+    fetch(`http://${server}/list/${lobby_id}/${room_id}`)
       .then((response) => {
-        if (!response.ok) throw new Error(`Fehler beim Laden der Liste: ${response.status} - ${response.statusText}`);
+        if (!response.ok) throw new Error(`Error loading list: ${response.status} - ${response.statusText}`);
         return response.json();
       }).then(data => {
         const divs = document.getElementsByTagName("div")
@@ -38,7 +38,7 @@
 
   function addImg(imgSrc, divs) {
     const imgEl = document.createElement("img");
-    imgEl.src = `http://${server}/img/${room_id}/${chapter_id}/${imgSrc}`;
+    imgEl.src = `http://${server}/img/${lobby_id}/${room_id}/${imgSrc}`;
     imgEl.setAttribute("data-img-name", imgSrc);
     imgEl.style = "float:left; max-width: 100%";
     if (imgSrc.includes("thumb")) divs[1].append(imgEl);
@@ -58,7 +58,7 @@
     const file = await readFile(imageInput.files[0])
 
     if (file == null) {
-      alert('Bitte wähle ein Bild aus.');
+      alert('Please select an image.');
       return;
     }
 
@@ -68,44 +68,45 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        lobby_id: lobby_id,
         room_id: room_id,
-        chapter_id: chapter_id,
         image: file,
       }),
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Fehler beim Upload: ${response.status} - ${response.statusText}`);
+          throw new Error(`Error uploading image: ${response.status} - ${response.statusText}`);
         }
-        console.log('Erfolgreich hochgeladen:', response.body);
+        console.log('Upload successfull:', response.body);
       })
-      .catch(error => console.error('Fehler:', error));
+      .catch(error => console.error('Error:', error));
   }
 
   function subscribeNotifications() {
-    // WebSocket-Verbindung aufbauen
-    const socket = new WebSocket(`ws://${server}/ws/${room_id}`);
+    const socket = new WebSocket(`ws://${server}/ws/${lobby_id}`);
 
-    // Eventlistener für Verbindungsöffnen
     socket.addEventListener('open', (event) => {
-      console.log('WebSocket-Verbindung geöffnet:', event);
+      console.log('Web socket connection opened:', event);
     });
 
-    // Eventlistener für Verbindungsfehler
     socket.addEventListener('error', (event) => {
-      console.error('Fehler bei der WebSocket-Verbindung:', event);
+      console.error('Error connecting web socket:', event);
     });
 
-    // Eventlistener für Verbindungsabbrechen
     socket.addEventListener('close', (event) => {
-      console.log('WebSocket-Verbindung geschlossen:', event);
+      console.log('web socket connection closed:', event);
     });
+
+    socket.addEventListener('message', (event) => {
+      console.log('Message:', event);
+    });
+
     return socket;
   }
 
-  function deleteOnServer(roomId, chapterId, imgName) {
-    let url = `http://${server}/delete/${roomId}`
-    if (chapterId) url += `/${chapterId}`
+  function deleteOnServer(lobbyId, roomId, imgName) {
+    let url = `http://${server}/delete/${lobbyId}`
+    if (roomId) url += `/${roomId}`
     if (imgName) url += `/${imgName}`
     fetch(url, {
       method: "POST",

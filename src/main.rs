@@ -1,23 +1,26 @@
-use actix::Actor;
+use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::{
     error,
     http::header,
     middleware::Logger,
-    web::{get, Data, JsonConfig},
+    web::{Data, JsonConfig},
     App, HttpResponse, HttpServer,
 };
-use config::SERVER;
-use notifications::NotificationServer;
-use services::{
-    delete_chapter, delete_img, delete_room, get_chapter_img_list, get_img, handle_options,
-    upload_img,
+use api::{
+    delete_img, delete_lobby, delete_room, get_img, get_room_img_list, handle_options, upload_img,
 };
+use config::SERVER;
+use uuid::Uuid;
+use ws::server::NotifyServer;
 
+mod api;
 mod config;
-mod notifications;
-mod services;
 mod utils;
+mod ws;
+
+pub type LobbyId = Uuid;
+pub type RoomId = Uuid;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -32,24 +35,30 @@ async fn main() -> std::io::Result<()> {
             });
 
         // Live notifications server
-        let notify_server = NotificationServer::new().start();
+        let notify_server = NotifyServer::new().start();
 
         // Create app
         App::new()
+            // -------------
             // config
+            // -------------
             .wrap(Logger::default())
             .wrap(cors_cfg())
             .app_data(json_cfg)
+            // -------------
             // Notifications
+            // -------------
             .app_data(Data::new(notify_server))
-            .route("/ws/{room_id}", get().to(notifications::start_connection))
-            // Services
-            .service(get_chapter_img_list)
+            .service(ws::start_connection)
+            // -------------
+            // API
+            // -------------
+            .service(get_room_img_list)
             .service(get_img)
             .service(handle_options)
             .service(upload_img)
             .service(delete_room)
-            .service(delete_chapter)
+            .service(delete_lobby)
             .service(delete_img)
     })
     .bind(SERVER)?
