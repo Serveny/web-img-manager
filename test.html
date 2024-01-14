@@ -9,9 +9,11 @@
   <div>
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="uploadImage()">Upload image</button>
-    <button onclick="deleteRoom()">Delete room</button>
-    <button onclick="deleteChapter()">Delete chapter</button>
-    <button onclick="deleteImage()">Delete image</button>
+    <button onclick="deleteOnServer(room_id)">Delete room</button>
+    <button onclick="deleteOnServer(room_id, chapter_id)">Delete chapter</button>
+    <button
+      onclick="deleteOnServer(room_id, chapter_id, document.getElementsByTagName('img')[0].getAttribute('data-img-name'))">Delete
+      image</button>
   </div>
   <div></div>
   <div></div>
@@ -33,6 +35,7 @@
         for (const imgSrc of data) {
           const imgEl = document.createElement("img");
           imgEl.src = `http://${server}/img/${room_id}/${chapter_id}/${imgSrc}`;
+          imgEl.setAttribute("data-img-name", imgSrc);
           imgEl.style = "float:left; max-width: 100%";
           if (imgSrc.includes("thumb")) divs[1].append(imgEl);
           else divs[2].append(imgEl);
@@ -50,11 +53,10 @@
 
   async function uploadImage() {
     const imageInput = document.getElementById('imageInput');
-
     const file = await readFile(imageInput.files[0])
 
     if (file == null) {
-      alert('Bitte wähle ein Bild aus und gib eine Chapter ID ein.');
+      alert('Bitte wähle ein Bild aus.');
       return;
     }
 
@@ -73,14 +75,9 @@
         if (!response.ok) {
           throw new Error(`Fehler beim Upload: ${response.status} - ${response.statusText}`);
         }
-        return null;
+        console.log('Erfolgreich hochgeladen:', response.body);
       })
-      .then(data => {
-        console.log('Erfolgreich hochgeladen:', data);
-      })
-      .catch(error => {
-        console.error('Fehler:', error);
-      });
+      .catch(error => console.error('Fehler:', error));
   }
 
   function subscribeNotifications() {
@@ -102,6 +99,15 @@
       console.log('WebSocket-Verbindung geschlossen:', event);
     });
     return socket;
+  }
+
+  function deleteOnServer(roomId, chapterId, imgName) {
+    let url = `http://${server}/delete/${roomId}`
+    if (chapterId) url += `/${chapterId}`
+    if (imgName) url += `/${imgName}`
+    fetch(url, {
+      method: "POST",
+    }).catch(err => console.error(err))
   }
 </script>
 

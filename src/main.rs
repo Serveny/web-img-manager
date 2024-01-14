@@ -3,7 +3,10 @@ use actix_cors::Cors;
 use actix_web::{error, http::header, middleware::Logger, web, App, HttpResponse, HttpServer};
 use config::SERVER;
 use notifications::NotificationServer;
-use services::{delete_img, get_chapter_img_list, get_img, handle_options, upload_img};
+use services::{
+    delete_chapter, delete_img, delete_room, get_chapter_img_list, get_img, handle_options,
+    upload_img,
+};
 
 mod config;
 mod notifications;
@@ -36,6 +39,8 @@ async fn main() -> std::io::Result<()> {
             .service(get_img)
             .service(handle_options)
             .service(upload_img)
+            .service(delete_room)
+            .service(delete_chapter)
             .service(delete_img)
     })
     .bind(SERVER)?

@@ -96,3 +96,15 @@ pub fn get_filenames(folder_path: &PathBuf) -> Vec<String> {
         })
         .unwrap_or_else(Vec::new)
 }
+
+// Inserts before last point an extension to the filename
+pub fn append_on_filename(filename: &str, extension: &str) -> String {
+    let mut parts: Vec<&str> = filename.split('.').collect();
+
+    if let Some(file_ext) = parts.pop() {
+        parts.push(extension);
+        parts.push(".");
+        parts.push(file_ext);
+    }
+    parts.join("")
+}

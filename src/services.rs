@@ -1,9 +1,9 @@
 use crate::{
     config::IMG_STORAGE_PATH,
     notifications::{NotificationMessage, NotificationServer},
-    utils::{base64_to_img, get_filenames, resize_image, save_img},
+    utils::{append_on_filename, base64_to_img, get_filenames, resize_image, save_img},
 };
-use actix_web::{delete, get, http::header, options, post, web, HttpResponse, Responder};
+use actix_web::{get, http::header, options, post, web, HttpResponse, Responder};
 use sanitize_filename::sanitize;
 use serde::Deserialize;
 use std::{
@@ -67,7 +67,7 @@ pub struct UploadRequest {
 #[post("/upload")]
 pub async fn upload_img(
     payload: web::Json<UploadRequest>,
-    notification: web::Data<NotificationServer>,
+    // notification: web::Data<NotificationServer>,
 ) -> impl Responder {
     let request = payload.0;
     let room_id = sanitize(&request.room_id);
@@ -90,10 +90,10 @@ pub async fn upload_img(
     };
 
     // Notify users about image upload
-    notification.send_message(
-        &room_id,
-        NotificationMessage::ImageUpload { chapter_id, img_id },
-    );
+    //notification.send_message(
+    //&room_id,
+    //NotificationMessage::ImageUpload { chapter_id, img_id },
+    //);
 
     // Send image id back
     HttpResponse::Ok()
@@ -101,40 +101,46 @@ pub async fn upload_img(
         .body(img_id.to_string())
 }
 
-#[delete("/delete/{room_id}")]
+#[post("/delete/{room_id}")]
 pub async fn delete_room(path: web::Path<(String,)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH).join(sanitize(&path.0));
 
     if fs::remove_dir_all(&folder_path).is_err() {
-        return HttpResponse::NotFound().body(format!("Could not delete folder {:?}", folder_path));
+        return HttpResponse::InternalServerError()
+            .body(format!("Could not delete folder {:?}", folder_path));
     }
 
     HttpResponse::Ok().finish()
 }
 
-#[delete("/delete/{room_id}/{chapter_id}")]
+#[post("/delete/{room_id}/{chapter_id}")]
 pub async fn delete_chapter(path: web::Path<(String, String)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH)
         .join(sanitize(&path.0))
         .join(sanitize(&path.1));
 
     if fs::remove_dir_all(&folder_path).is_err() {
-        return HttpResponse::NotFound().body(format!("Could not delete folder {:?}", folder_path));
+        return HttpResponse::InternalServerError()
+            .body(format!("Could not delete folder {:?}", folder_path));
     }
 
     HttpResponse::Ok().finish()
 }
 
-#[delete("/delete/{room_id}/{chapter_id}/{file}")]
+#[post("/delete/{room_id}/{chapter_id}/{file}")]
 pub async fn delete_img(path: web::Path<(String, String, String)>) -> impl Responder {
-    let file_path = Path::new(IMG_STORAGE_PATH)
+    let folder_path = Path::new(IMG_STORAGE_PATH)
         .join(sanitize(&path.0))
-        .join(sanitize(&path.1))
-        .join(sanitize(&path.2));
+        .join(sanitize(&path.1));
 
-    if fs::remove_file(&file_path).is_err() {
-        return HttpResponse::NotFound().body(format!("Could not delete file {:?}", file_path));
-    }
+    // Delete big image
+    let filename = sanitize(&path.2).replace("_thumb", "");
+    let file_path = folder_path.join(&filename);
+    fs::remove_file(&file_path).unwrap_or_default();
+
+    // Delete thumb image
+    let thumb_path = folder_path.join(append_on_filename(&filename, "_thumb"));
+    fs::remove_file(&thumb_path).unwrap_or_default();
 
     HttpResponse::Ok().finish()
 }
