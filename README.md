@@ -17,37 +17,37 @@ Little project to up and download image files to/from an actix rust server and g
 
 <table>
   <tr>
-    <th>Name</th>
+    <th>Function</th>
     <th>Method</th>
     <th>URL</th>
     <th>Parameters</th>
     <th>Returns</th>
   </tr>
   <tr>
-    <td><code>get image name list</code></td>
+    <td>get image name list</td>
     <td>GET</td>
-    <td>/list/{lobby_id}/{room_id}</td>
+    <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
     <td>JSON encoded list of filenames</td>
   </tr>
   <tr>
-    <td><code>get image</code></td>
+    <td>get image</td>
     <td>GET</td>
-    <td>/img/{lobby_id}/{room_id}/{img_filename}</td>
+    <td><code>/img/{lobby_id}/{room_id}/{img_filename}</code></td>
     <td>None</td>
     <td>image file</td>
   </tr>
   <tr>
-    <td><code>upload</code></td>
+    <td>upload</td>
     <td>POST</td>
-    <td>/upload</td>
+    <td><code>/upload</code></td>
     <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
     <td>image name as string (example: <code>3</code>)</td>
   </tr>
   <tr>
-    <td><code>delete</code></td>
+    <td>delete</td>
     <td>POST</td>
-    <td>/delete/{lobby_id?}/{room_id?}/{img_filename?}</td>
+    <td><code>/delete/{lobby_id?}/{room_id?}/{img_filename?}</code></td>
     <td>None</td>
     <td>OK</td>
   </tr>
