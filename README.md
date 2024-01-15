@@ -28,12 +28,19 @@ Little project to up and download image files to/from an actix rust server and g
     <td>GET</td>
     <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
-    <td>JSON encoded list of filenames</td>
+    <td>JSON encoded list of int img_id's (example: `[1,2,3,4,8]`)</td>
   </tr>
   <tr>
-    <td>get image</td>
+    <td>get thumb image</td>
     <td>GET</td>
-    <td><code>/img/{lobby_id}/{room_id}/{img_filename}</code></td>
+    <td><code>/img/thumb/{lobby_id}/{room_id}/{img_id}</code></td>
+    <td>None</td>
+    <td>thumb image file</td>
+  </tr>
+  <tr>
+    <td>get big image</td>
+    <td>GET</td>
+    <td><code>/img/{lobby_id}/{room_id}/{img_id}</code></td>
     <td>None</td>
     <td>image file</td>
   </tr>
@@ -42,13 +49,19 @@ Little project to up and download image files to/from an actix rust server and g
     <td>POST</td>
     <td><code>/upload</code></td>
     <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
-    <td>image name as string (example: <code>3</code>)</td>
+    <td>img_id (example: <code>3</code>)</td>
   </tr>
   <tr>
-    <td>delete</td>
+    <td>delete room / lobby / img</td>
     <td>POST</td>
-    <td><code>/delete/{lobby_id?}/{room_id?}/{img_filename?}</code></td>
+    <td><code>/delete/{lobby_id?}/{room_id?}/{img_id?}</code></td>
     <td>None</td>
     <td>OK</td>
   </tr>
 </table>
+
+### Parameters
+
+- `lobby_id`: Uuid v4
+- `room_id`: Uuid v4
+- `img_id`: 32 bit Integer

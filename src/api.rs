@@ -1,8 +1,11 @@
 use crate::{
     config::IMG_STORAGE_PATH,
-    utils::{append_on_filename, base64_to_img, get_filenames, resize_image, save_img},
+    utils::{
+        base64_to_img, delete_folder, get_filenames_as_u32, get_img, img_id_to_filename,
+        resize_image, save_img, ImgType,
+    },
     ws::{messages::ImageUploaded, server::NotifyServer},
-    LobbyId, RoomId,
+    ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
 use actix_web::{
@@ -12,51 +15,30 @@ use actix_web::{
     web::{self, Data, Json},
     HttpResponse, Responder,
 };
-use sanitize_filename::sanitize;
 use serde::Deserialize;
 use std::{
-    fs::{self, File},
-    io::Read,
+    fs::{self},
     path::Path,
 };
-use uuid::Uuid;
 
 #[get("/list/{lobby_id}/{room_id}")]
 pub async fn get_room_img_list(info: web::Path<(LobbyId, RoomId)>) -> impl Responder {
     let lobby_id = info.0.to_string();
     let room_id = info.1.to_string();
     let folder_path = Path::new(IMG_STORAGE_PATH).join(lobby_id).join(room_id);
-    let filenames = get_filenames(&folder_path);
+    let filenames = get_filenames_as_u32(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
 
-#[get("/img/{lobby_id}/{room_id}/{filename}")]
-pub async fn get_img(info: web::Path<(LobbyId, RoomId, String)>) -> impl Responder {
-    let lobby_id = info.0.to_string();
-    let room_id = info.1.to_string();
-    let filename = sanitize(&info.2);
-    let file_path = Path::new(IMG_STORAGE_PATH)
-        .join(lobby_id)
-        .join(room_id)
-        .join(&filename);
+#[get("/img/thumb/{lobby_id}/{room_id}/{img_id}")]
+pub async fn get_img_thumb(info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+    get_img(ImgType::Thumb, info)
+}
 
-    // Open file
-    let Ok(mut file) = File::open(&file_path) else {
-        return HttpResponse::NotFound().body("Picture not found");
-    };
-
-    // Read file content
-    let mut img_content = Vec::new();
-    let Ok(_) = file.read_to_end(&mut img_content) else {
-        return HttpResponse::NoContent().body("Picture file corrupt");
-    };
-
-    // Send file back
-    return HttpResponse::Ok()
-        .append_header(header::ContentType::jpeg())
-        .append_header(header::ContentDisposition::attachment(filename))
-        .body(img_content);
+#[get("/img/{lobby_id}/{room_id}/{img_id}")]
+pub async fn get_img_big(info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+    get_img(ImgType::Big, info)
 }
 
 #[options("/{tail:.*}")]
@@ -113,45 +95,33 @@ pub async fn upload_img(
 }
 
 #[post("/delete/{lobby_id}")]
-pub async fn delete_lobby(path: web::Path<(Uuid,)>) -> impl Responder {
+pub async fn delete_lobby(path: web::Path<(LobbyId,)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH).join(path.0.to_string());
-
-    if fs::remove_dir_all(&folder_path).is_err() {
-        return HttpResponse::InternalServerError()
-            .body(format!("Could not delete folder {:?}", folder_path));
-    }
-
-    HttpResponse::Ok().finish()
+    delete_folder(&folder_path)
 }
 
 #[post("/delete/{lobby_id}/{room_id}")]
-pub async fn delete_room(path: web::Path<(Uuid, Uuid)>) -> impl Responder {
+pub async fn delete_room(path: web::Path<(LobbyId, RoomId)>) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH)
         .join(path.0.to_string())
         .join(path.1.to_string());
-
-    if fs::remove_dir_all(&folder_path).is_err() {
-        return HttpResponse::InternalServerError()
-            .body(format!("Could not delete folder {:?}", folder_path));
-    }
-
-    HttpResponse::Ok().finish()
+    delete_folder(&folder_path)
 }
 
 #[post("/delete/{lobby_id}/{room_id}/{file}")]
-pub async fn delete_img(path: web::Path<(Uuid, Uuid, String)>) -> impl Responder {
-    let folder_path = Path::new(IMG_STORAGE_PATH)
+pub async fn delete_img(path: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+    let room_path = Path::new(IMG_STORAGE_PATH)
         .join(path.0.to_string())
         .join(path.1.to_string());
+    let filename = img_id_to_filename(path.2);
 
     // Delete big image
-    let filename = sanitize(&path.2).replace("_thumb", "");
-    let file_path = folder_path.join(&filename);
-    fs::remove_file(&file_path).unwrap_or_default();
+    let img_path = room_path.join(&filename);
+    fs::remove_file(img_path).unwrap_or_default();
 
     // Delete thumb image
-    let thumb_path = folder_path.join(append_on_filename(&filename, "_thumb"));
-    fs::remove_file(&thumb_path).unwrap_or_default();
+    let thumb_path = room_path.join("thumb").join(filename);
+    fs::remove_file(thumb_path).unwrap_or_default();
 
     HttpResponse::Ok().finish()
 }

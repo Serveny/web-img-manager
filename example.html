@@ -32,16 +32,19 @@
         return response.json();
       }).then(data => {
         const divs = document.getElementsByTagName("div")
-        for (const imgSrc of data) addImg(imgSrc, divs);
+        for (const imgId of data) {
+          addImg(imgId, divs, true);
+          addImg(imgId, divs, false);
+        }
       })
   }
 
-  function addImg(imgSrc, divs) {
+  function addImg(imgSrc, divs, isThumb) {
     const imgEl = document.createElement("img");
-    imgEl.src = `http://${server}/img/${lobby_id}/${room_id}/${imgSrc}`;
+    imgEl.src = `http://${server}/img/${isThumb ? 'thumb/' : ''}${lobby_id}/${room_id}/${imgSrc}`;
     imgEl.setAttribute("data-img-name", imgSrc);
     imgEl.style = "float:left; max-width: 100%";
-    if (imgSrc.includes("thumb")) divs[1].append(imgEl);
+    if (isThumb) divs[1].append(imgEl);
     else divs[2].append(imgEl);
   }
 

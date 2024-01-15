@@ -1,12 +1,49 @@
-use crate::config::IMG_STORAGE_PATH;
+use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
+use actix_web::{http::header, web, HttpResponse, Responder};
 use base64::{engine::general_purpose::STANDARD as Base64, Engine};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use regex::Regex;
 use std::{
-    fs::{self, create_dir_all},
+    fs::{self, create_dir_all, DirEntry, File},
+    io::{Error, Read},
     path::{Path, PathBuf},
 };
 use uuid::Uuid;
+
+#[derive(PartialEq, Eq)]
+pub enum ImgType {
+    Big,
+    Thumb,
+}
+
+pub fn get_img(img_type: ImgType, info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+    let lobby_id = info.0.to_string();
+    let room_id = info.1.to_string();
+    let filename = format!("{}.jpg", info.2);
+
+    let mut file_path = Path::new(IMG_STORAGE_PATH).join(lobby_id).join(room_id);
+    if img_type == ImgType::Thumb {
+        file_path = file_path.join("thumb");
+    }
+    file_path = file_path.join(&filename);
+
+    // Open file
+    let Ok(mut file) = File::open(&file_path) else {
+        return HttpResponse::NotFound().body("Picture not found");
+    };
+
+    // Read file content
+    let mut img_content = Vec::new();
+    let Ok(_) = file.read_to_end(&mut img_content) else {
+        return HttpResponse::NoContent().body("Picture file corrupt");
+    };
+
+    // Send file back
+    HttpResponse::Ok()
+        .append_header(header::ContentType::jpeg())
+        .append_header(header::ContentDisposition::attachment(filename))
+        .body(img_content)
+}
 
 pub fn base64_to_img<'a>(base64_img: &'a str) -> Result<DynamicImage, &'static str> {
     // Format
@@ -58,26 +95,26 @@ pub fn save_img(
         return Err(String::from("Could not create image folder"));
     }
 
-    // Save images
-    let img_id = get_filenames(&img_folder_path)
+    // Save big image
+    let img_id = get_filenames_as_u32(&img_folder_path)
         .iter()
-        .map(|name| {
-            (*name)
-                .to_lowercase()
-                .trim_matches(|c: char| !c.is_numeric())
-                .parse::<u32>()
-                .unwrap_or(0)
-        })
         .max()
-        .unwrap_or(0)
+        .unwrap_or(&0)
         + 1;
 
-    let img_path = img_folder_path.join(format!("{}.jpg", img_id));
+    let img_path = img_folder_path.join(img_id_to_filename(img_id));
     if let Err(err) = img.save_with_format(img_path, ImageFormat::Jpeg) {
         return Err(err.to_string());
     }
 
-    let thumb_img_path = img_folder_path.join(format!("{}_thumb.jpg", img_id));
+    // Check thumb folder
+    let thumb_folder_path = img_folder_path.join("thumb");
+    if !thumb_folder_path.exists() && create_dir_all(&thumb_folder_path).is_err() {
+        return Err(String::from("Could not create thumb folder"));
+    }
+
+    // Save thumb image
+    let thumb_img_path = thumb_folder_path.join(format!("{}.jpg", img_id));
     if let Err(err) = thumb_img.save_with_format(thumb_img_path, ImageFormat::Jpeg) {
         return Err(err.to_string());
     }
@@ -85,29 +122,32 @@ pub fn save_img(
     Ok(img_id)
 }
 
-pub fn get_filenames(folder_path: &PathBuf) -> Vec<String> {
+pub fn get_filenames_as_u32(folder_path: &PathBuf) -> Vec<ImgId> {
+    let entry_to_u32 = |entry: Result<DirEntry, Error>| {
+        entry.ok().and_then(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .to_lowercase()
+                .trim_matches(|c: char| !c.is_numeric())
+                .parse::<u32>()
+                .ok()
+        })
+    };
     fs::read_dir(folder_path)
         .ok()
-        .map(|entries| {
-            entries
-                .filter_map(|entry| {
-                    entry
-                        .ok()
-                        .map(|e| e.file_name().to_string_lossy().into_owned())
-                })
-                .collect()
-        })
+        .map(|entries| entries.filter_map(entry_to_u32).collect())
         .unwrap_or_else(Vec::new)
 }
 
-// Inserts before last point an extension to the filename
-pub fn append_on_filename(filename: &str, extension: &str) -> String {
-    let mut parts: Vec<&str> = filename.split('.').collect();
-
-    if let Some(file_ext) = parts.pop() {
-        parts.push(extension);
-        parts.push(".");
-        parts.push(file_ext);
+pub fn delete_folder(folder_path: &PathBuf) -> impl Responder {
+    if fs::remove_dir_all(folder_path).is_err() {
+        return HttpResponse::InternalServerError()
+            .body(format!("Could not delete folder {:?}", folder_path));
     }
-    parts.join("")
+
+    HttpResponse::Ok().finish()
+}
+
+pub fn img_id_to_filename(img_id: ImgId) -> String {
+    format!("{}.jpg", img_id)
 }

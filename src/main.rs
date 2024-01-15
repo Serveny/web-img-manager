@@ -8,7 +8,8 @@ use actix_web::{
     App, HttpResponse, HttpServer,
 };
 use api::{
-    delete_img, delete_lobby, delete_room, get_img, get_room_img_list, handle_options, upload_img,
+    delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
+    handle_options, upload_img,
 };
 use config::SERVER;
 use uuid::Uuid;
@@ -21,6 +22,7 @@ mod ws;
 
 pub type LobbyId = Uuid;
 pub type RoomId = Uuid;
+pub type ImgId = u32;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -54,7 +56,8 @@ async fn main() -> std::io::Result<()> {
             // API
             // -------------
             .service(get_room_img_list)
-            .service(get_img)
+            .service(get_img_thumb)
+            .service(get_img_big)
             .service(handle_options)
             .service(upload_img)
             .service(delete_room)
