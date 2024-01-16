@@ -1,3 +1,4 @@
+use crate::{ImgId, LobbyId, RoomId, SessionId};
 use actix::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
@@ -17,34 +18,33 @@ pub struct WsMessage(pub String);
 #[rtype(result = "()")]
 pub struct Connect {
     pub addr: Recipient<WsMessage>,
-    pub lobby_id: Uuid,
-    pub self_id: Uuid,
+    pub lobby_id: LobbyId,
+    pub session_id: SessionId,
 }
 
 // WsConn sends this to a lobby to say "take me out please"
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
-    pub room_id: Uuid,
-    pub id: Uuid,
+    pub session_id: SessionId,
 }
 
 // client sends this to the lobby for the lobby to echo out.
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ClientActorMessage {
-    pub id: Uuid,
     pub msg: String,
-    pub room_id: Uuid,
+    pub room_id: RoomId,
+    pub session_id: SessionId,
 }
 
 // image was uploaded
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ImageUploaded {
-    pub lobby_id: Uuid,
-    pub room_id: Uuid,
-    pub img_id: u32,
+    pub lobby_id: LobbyId,
+    pub room_id: RoomId,
+    pub img_id: ImgId,
 }
 
 impl ImageUploaded {

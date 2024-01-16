@@ -22,6 +22,7 @@ mod ws;
 
 pub type LobbyId = Uuid;
 pub type RoomId = Uuid;
+pub type SessionId = Uuid;
 pub type ImgId = u32;
 
 #[actix_web::main]

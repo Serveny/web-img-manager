@@ -1,3 +1,4 @@
+use crate::{LobbyId, SessionId};
 use actix::prelude::*;
 use actix_web::{
     get,
@@ -29,8 +30,8 @@ pub async fn start_connection(
 }
 
 pub struct WsConn {
-    id: Uuid,
-    lobby_id: Uuid,
+    session_id: SessionId,
+    lobby_id: LobbyId,
     hb: Instant,
     lobby_addr: Addr<NotifyServer>,
 }
@@ -38,7 +39,7 @@ pub struct WsConn {
 impl WsConn {
     pub fn new(lobby_id: Uuid, lobby: Addr<NotifyServer>) -> WsConn {
         WsConn {
-            id: Uuid::new_v4(),
+            session_id: Uuid::new_v4(),
             lobby_id,
             hb: Instant::now(),
             lobby_addr: lobby,
@@ -69,7 +70,7 @@ impl Actor for WsConn {
             .send(Connect {
                 addr: addr.recipient(),
                 lobby_id: self.lobby_id,
-                self_id: self.id,
+                session_id: self.session_id,
             })
             .into_actor(self)
             .then(|res, _, ctx| {
@@ -84,8 +85,7 @@ impl Actor for WsConn {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         self.lobby_addr.do_send(Disconnect {
-            id: self.id,
-            room_id: self.lobby_id,
+            session_id: self.session_id,
         });
         Running::Stop
     }
@@ -111,7 +111,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
             }
             Ok(ws::Message::Nop) => (),
             Ok(Text(s)) => self.lobby_addr.do_send(ClientActorMessage {
-                id: self.id,
+                session_id: self.session_id,
                 msg: s.to_string(),
                 room_id: self.lobby_id,
             }),

@@ -5,7 +5,7 @@
   <title>Test img web manager</title>
 </head>
 
-<body>
+<body style="background-color: dimgray;">
   <div>
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="uploadImage()">Upload image</button>
@@ -23,6 +23,7 @@
   const lobby_id = "6a766d31-71d5-4a34-8df5-124b9614b19f";
   const room_id = "dbc64507-38fa-45e4-ad4b-197a4961bfa6";
   const socket = subscribeNotifications();
+
   readImageList();
 
   function readImageList() {
