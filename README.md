@@ -20,6 +20,7 @@ Little project to up and download image files to/from an actix rust server and g
 
 - `lobby_id`: Uuid v4
 - `room_id`: Uuid v4
+- `session_id`: Uuid v4
 - `img_id`: 32 bit Integer
 
 <table>
@@ -87,12 +88,12 @@ Little project to up and download image files to/from an actix rust server and g
     <td>Receive</td>
     <td>Self connected notification</td>
     <td>JSON</td>
-    <td><code>event</code>: "Connected"<br></td>
+    <td><code>event</code>: "Connected", <code>session_id</code></td>
   </tr>
   <tr>
     <td>Receive</td>
     <td>Image uploaded notification</td>
     <td>JSON</td>
-    <td><code>event</code>: "ImageUploaded"<br><code>room_id</code><br><code>img_id</code></td>
+    <td><code>event</code>: "ImageUploaded", <code>room_id</code>, <code>img_id</code></td>
   </tr>
 </table>
