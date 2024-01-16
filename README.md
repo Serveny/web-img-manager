@@ -9,6 +9,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📁 save files in structured folder (lobby_id/room_id/img_name)
 - [x] ❌ delete lobby & room folders
 - [x] ❌ delete images
+- [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 - [ ] 📰 upload live notification
 - [ ] 📰 delete live notification
 - [ ] 💬 live chat
