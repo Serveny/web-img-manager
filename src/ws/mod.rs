@@ -5,8 +5,9 @@ use actix_web::{
     web::{Data, Path, Payload},
     Error, HttpRequest, HttpResponse,
 };
-use actix_web_actors::{ws, ws::Message::Text};
-use messages::{ClientActorMessage, Connect, Disconnect, WsMessage};
+use actix_web_actors::ws::{self, Message, Message::Text};
+use log::debug;
+use messages::{Connect, Disconnect, WsMessage};
 use server::NotifyServer;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
@@ -21,7 +22,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 #[get("/ws/{lobby_id}")]
 pub async fn start_connection(
     req: HttpRequest,
-    path: Path<(Uuid,)>,
+    path: Path<(LobbyId,)>,
     stream: Payload,
     srv: Data<Addr<NotifyServer>>,
 ) -> Result<HttpResponse, Error> {
@@ -37,7 +38,7 @@ pub struct WsConn {
 }
 
 impl WsConn {
-    pub fn new(lobby_id: Uuid, lobby: Addr<NotifyServer>) -> WsConn {
+    pub fn new(lobby_id: LobbyId, lobby: Addr<NotifyServer>) -> WsConn {
         WsConn {
             session_id: Uuid::new_v4(),
             lobby_id,
@@ -94,27 +95,23 @@ impl Actor for WsConn {
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
-            Ok(ws::Message::Ping(msg)) => {
+            Ok(Message::Ping(msg)) => {
                 self.hb = Instant::now();
                 ctx.pong(&msg);
             }
-            Ok(ws::Message::Pong(_)) => {
+            Ok(Message::Pong(_)) => {
                 self.hb = Instant::now();
             }
-            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
-            Ok(ws::Message::Close(reason)) => {
+            Ok(Message::Binary(bin)) => ctx.binary(bin),
+            Ok(Message::Close(reason)) => {
                 ctx.close(reason);
                 ctx.stop();
             }
-            Ok(ws::Message::Continuation(_)) => {
+            Ok(Message::Continuation(_)) => {
                 ctx.stop();
             }
-            Ok(ws::Message::Nop) => (),
-            Ok(Text(s)) => self.lobby_addr.do_send(ClientActorMessage {
-                session_id: self.session_id,
-                msg: s.to_string(),
-                room_id: self.lobby_id,
-            }),
+            Ok(Message::Nop) => (),
+            Ok(Text(s)) => debug!("Text send: {}", s),
             Err(e) => println!("{}", e),
         }
     }

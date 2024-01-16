@@ -29,16 +29,16 @@ pub type ImgId = u32;
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
 
-    HttpServer::new(|| {
+    // Live notifications server
+    let notify_server = Data::new(NotifyServer::new().start());
+
+    HttpServer::new(move || {
         // json configuration
         let json_cfg = JsonConfig::default()
             .limit(10 * 1024 * 1024) // limit request payload size to 10MB
             .error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
             });
-
-        // Live notifications server
-        let notify_server = NotifyServer::new().start();
 
         // Create app
         App::new()
@@ -51,7 +51,7 @@ async fn main() -> std::io::Result<()> {
             // -------------
             // Notifications
             // -------------
-            .app_data(Data::new(notify_server))
+            .app_data(notify_server.clone())
             .service(ws::start_connection)
             // -------------
             // API

@@ -9,12 +9,18 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📁 save files in structured folder (lobby_id/room_id/img_name)
 - [x] ❌ delete lobby & room folders
 - [x] ❌ delete images
-- [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
-- [ ] 📰 upload live notification
+- [x] 📰 upload live notification
 - [ ] 📰 delete live notification
 - [ ] 💬 live chat
+- [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
 ## API
+
+#### Parameters
+
+- `lobby_id`: Uuid v4
+- `room_id`: Uuid v4
+- `img_id`: 32 bit Integer
 
 <table>
   <tr>
@@ -59,10 +65,34 @@ Little project to up and download image files to/from an actix rust server and g
     <td>None</td>
     <td>OK</td>
   </tr>
+  <tr>
+    <td>connect to websocket</td>
+    <td>GET</td>
+    <td><code>/ws/{lobby_id}</code></td>
+    <td>None</td>
+    <td>OK</td>
+  </tr>
 </table>
 
-### Parameters
+### Web sockets messages
 
-- `lobby_id`: Uuid v4
-- `room_id`: Uuid v4
-- `img_id`: 32 bit Integer
+<table>
+  <tr>
+    <th>Direction</th>
+    <th>Function</th>
+    <th>Format</th>
+    <th>Content</th>
+  </tr>
+  <tr>
+    <td>Receive</td>
+    <td>Self connected notification</td>
+    <td>JSON</td>
+    <td><code>event</code>: "Connected"<br></td>
+  </tr>
+  <tr>
+    <td>Receive</td>
+    <td>Image uploaded notification</td>
+    <td>JSON</td>
+    <td><code>event</code>: "ImageUploaded"<br><code>room_id</code><br><code>img_id</code></td>
+  </tr>
+</table>

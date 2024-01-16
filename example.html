@@ -32,18 +32,20 @@
         if (!response.ok) throw new Error(`Error loading list: ${response.status} - ${response.statusText}`);
         return response.json();
       }).then(data => {
-        const divs = document.getElementsByTagName("div")
-        for (const imgId of data) {
-          addImg(imgId, divs, true);
-          addImg(imgId, divs, false);
-        }
+        for (const imgId of data) addImgs(imgId);
       })
   }
 
-  function addImg(imgSrc, divs, isThumb) {
+  function addImgs(imgId) {
+    const divs = document.getElementsByTagName("div")
+    addImg(imgId, divs, true);
+    addImg(imgId, divs, false);
+  }
+
+  function addImg(imgId, divs, isThumb) {
     const imgEl = document.createElement("img");
-    imgEl.src = `http://${server}/img/${isThumb ? 'thumb/' : ''}${lobby_id}/${room_id}/${imgSrc}`;
-    imgEl.setAttribute("data-img-name", imgSrc);
+    imgEl.src = `http://${server}/img/${isThumb ? 'thumb/' : ''}${lobby_id}/${room_id}/${imgId}`;
+    imgEl.setAttribute("data-img-name", imgId);
     imgEl.style = "float:left; max-width: 100%";
     if (isThumb) divs[1].append(imgEl);
     else divs[2].append(imgEl);
@@ -88,6 +90,7 @@
 
   function subscribeNotifications() {
     const socket = new WebSocket(`ws://${server}/ws/${lobby_id}`);
+    const sessionId = null;
 
     socket.addEventListener('open', (event) => {
       console.log('Web socket connection opened:', event);
@@ -103,6 +106,15 @@
 
     socket.addEventListener('message', (event) => {
       console.log('Message:', event);
+      const ev = JSON.parse(event.data);
+      switch (ev.event) {
+        case "Connected":
+          sessionId = ev.session_id;
+          break;
+        case "ImageUploaded":
+          addImgs(ev.img_id);
+          break;
+      }
     });
 
     return socket;

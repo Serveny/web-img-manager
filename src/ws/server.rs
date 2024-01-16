@@ -1,9 +1,7 @@
-use super::messages::{
-    ClientActorMessage, Connect, Disconnect, ImageUploaded, ToOutputJsonString, WsMessage,
-};
+use super::messages::{Connect, Disconnect, ImageUploaded, ToOutputJsonString, WsMessage};
 use crate::LobbyId;
 use actix::prelude::*;
-use log::debug;
+use log::{debug, warn};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
@@ -17,17 +15,37 @@ pub struct NotifyServer {
 
 impl NotifyServer {
     pub fn new() -> NotifyServer {
+        debug!("Server instance created");
         NotifyServer {
             sessions: HashMap::new(),
             lobbies: HashMap::new(),
         }
     }
 
-    pub fn send_message(&self, message: &str, id_to: &Uuid) {
-        if let Some(socket_recipient) = self.sessions.get(id_to) {
-            let _ = socket_recipient.do_send(WsMessage(message.to_owned()));
-        } else {
-            debug!("attempting to send message but couldn't find user id.");
+    fn send_msg(&self, session_id: &SessionId, msg: &impl ToOutputJsonString) {
+        match msg.to_output_json_string() {
+            Ok(msg_json) => self.send_string(session_id, &msg_json),
+            Err(err) => {
+                warn!("Can't parse event to json: {}", err);
+                return;
+            }
+        };
+    }
+
+    fn send_msg_to_lobby(&self, lobby_id: &LobbyId, msg: &str) {
+        let Some(lobby) = self.lobbies.get(lobby_id) else {
+            warn!("Lobby {} not found", lobby_id);
+            return;
+        };
+        for session_id in lobby {
+            self.send_string(session_id, msg);
+        }
+    }
+
+    fn send_string(&self, session_id: &SessionId, msg: &str) {
+        match self.sessions.get(session_id) {
+            Some(socket_recipient) => socket_recipient.do_send(WsMessage(msg.to_string())),
+            None => warn!("Can't find socket recipient: {}", session_id),
         }
     }
 }
@@ -47,21 +65,13 @@ impl Handler<Connect> for NotifyServer {
             .or_insert_with(HashSet::new)
             .insert(msg.session_id);
 
-        // send to everyone in the room that new uuid just joined
-        self.lobbies
-            .get(&msg.lobby_id)
-            .unwrap()
-            .iter()
-            .filter(|conn_id| *conn_id.to_owned() != msg.session_id)
-            .for_each(|conn_id| {
-                self.send_message(&format!("{} just joined!", msg.session_id), conn_id)
-            });
+        debug!("Lobbies: {:?}", self.lobbies);
+
+        // send self your new uuid
+        self.send_msg(&msg.session_id, &msg);
 
         // store the address
         self.sessions.insert(msg.session_id, msg.addr);
-
-        // send self your new uuid
-        self.send_message(&format!("your id is {}", msg.session_id), &msg.session_id);
     }
 }
 
@@ -72,7 +82,7 @@ impl Handler<Disconnect> for NotifyServer {
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         // Remove session from sessions map
         if self.sessions.remove(&msg.session_id).is_none() {
-            debug!("Session id to delete not in sessions: {}", msg.session_id);
+            warn!("Session id to delete not in sessions: {}", msg.session_id);
         }
 
         // Remove session id from lobby
@@ -82,7 +92,7 @@ impl Handler<Disconnect> for NotifyServer {
             .find(|lobby| lobby.1.contains(&msg.session_id))
             .and_then(|lobby| lobby.1.remove(&msg.session_id).then(|| *lobby.0))
         else {
-            debug!("Session id to delete not in lobbies: {}", msg.session_id);
+            warn!("Session id to delete not in lobbies: {}", msg.session_id);
             return;
         };
 
@@ -98,42 +108,14 @@ impl Handler<Disconnect> for NotifyServer {
     }
 }
 
-impl Handler<ClientActorMessage> for NotifyServer {
-    type Result = ();
-
-    fn handle(&mut self, msg: ClientActorMessage, _: &mut Context<Self>) -> Self::Result {
-        if msg.msg.starts_with("\\w") {
-            if let Some(id_to) = msg.msg.split(' ').collect::<Vec<&str>>().get(1) {
-                self.send_message(&msg.msg, &Uuid::parse_str(id_to).unwrap());
-            }
-        } else {
-            self.lobbies
-                .get(&msg.room_id)
-                .unwrap()
-                .iter()
-                .for_each(|client| self.send_message(&msg.msg, client));
-        }
-    }
-}
-
 impl Handler<ImageUploaded> for NotifyServer {
     type Result = ();
 
     fn handle(&mut self, msg: ImageUploaded, _: &mut Context<Self>) -> Self::Result {
-        let Some(lobby) = self.lobbies.get(&msg.lobby_id) else {
-            debug!("Lobby {} not found", msg.lobby_id);
+        let Ok(msg_json) = msg.to_output_json_string() else {
+            warn!("Can't parse event to json");
             return;
         };
-        let Ok(msg) = msg.to_output_json_string() else {
-            debug!("Can't parse event to json");
-            return;
-        };
-        for session_id in lobby {
-            if let Some(socket_recipient) = self.sessions.get(session_id) {
-                socket_recipient.do_send(WsMessage(msg.clone()));
-            } else {
-                debug!("Can't socket recipient: {}", session_id);
-            }
-        }
+        self.send_msg_to_lobby(&msg.lobby_id, &msg_json);
     }
 }

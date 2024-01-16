@@ -22,19 +22,25 @@ pub struct Connect {
     pub session_id: SessionId,
 }
 
+#[derive(Serialize, Deserialize)]
+struct ConnectOutputEvent {
+    pub event: &'static str,
+    pub session_id: Uuid,
+}
+
+impl ToOutputJsonString for Connect {
+    fn to_output_json_string(&self) -> Result<String, Error> {
+        serde_json::to_string(&ConnectOutputEvent {
+            event: "Connected",
+            session_id: self.session_id,
+        })
+    }
+}
+
 // WsConn sends this to a lobby to say "take me out please"
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
-    pub session_id: SessionId,
-}
-
-// client sends this to the lobby for the lobby to echo out.
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct ClientActorMessage {
-    pub msg: String,
-    pub room_id: RoomId,
     pub session_id: SessionId,
 }
 
@@ -45,6 +51,13 @@ pub struct ImageUploaded {
     pub lobby_id: LobbyId,
     pub room_id: RoomId,
     pub img_id: ImgId,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ImageUploadedOutputEvent {
+    pub event: &'static str,
+    pub room_id: Uuid,
+    pub img_id: u32,
 }
 
 impl ImageUploaded {
@@ -65,11 +78,4 @@ impl ToOutputJsonString for ImageUploaded {
             img_id: self.img_id,
         })
     }
-}
-
-#[derive(Serialize, Deserialize)]
-struct ImageUploadedOutputEvent {
-    pub event: &'static str,
-    pub room_id: Uuid,
-    pub img_id: u32,
 }
