@@ -53,8 +53,17 @@ pub struct ImageUploaded {
     pub img_id: ImgId,
 }
 
+// image was uploaded
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ImageDeleted {
+    pub lobby_id: LobbyId,
+    pub room_id: RoomId,
+    pub img_id: ImgId,
+}
+
 #[derive(Serialize, Deserialize)]
-struct ImageUploadedOutputEvent {
+struct ImageProcessedOutputEvent {
     pub event: &'static str,
     pub room_id: Uuid,
     pub img_id: u32,
@@ -70,10 +79,29 @@ impl ImageUploaded {
     }
 }
 
+impl ImageDeleted {
+    pub fn new(lobby_id: Uuid, room_id: Uuid, img_id: u32) -> Self {
+        Self {
+            lobby_id,
+            room_id,
+            img_id,
+        }
+    }
+}
 impl ToOutputJsonString for ImageUploaded {
     fn to_output_json_string(&self) -> Result<String, Error> {
-        serde_json::to_string(&ImageUploadedOutputEvent {
+        serde_json::to_string(&ImageProcessedOutputEvent {
             event: "ImageUploaded",
+            room_id: self.room_id,
+            img_id: self.img_id,
+        })
+    }
+}
+
+impl ToOutputJsonString for ImageDeleted {
+    fn to_output_json_string(&self) -> Result<String, Error> {
+        serde_json::to_string(&ImageProcessedOutputEvent {
+            event: "ImageDeleted",
             room_id: self.room_id,
             img_id: self.img_id,
         })

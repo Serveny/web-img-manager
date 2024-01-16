@@ -1,4 +1,6 @@
-use super::messages::{Connect, Disconnect, ImageUploaded, ToOutputJsonString, WsMessage};
+use super::messages::{
+    Connect, Disconnect, ImageDeleted, ImageUploaded, ToOutputJsonString, WsMessage,
+};
 use crate::LobbyId;
 use actix::prelude::*;
 use log::{debug, warn};
@@ -113,7 +115,19 @@ impl Handler<ImageUploaded> for NotifyServer {
 
     fn handle(&mut self, msg: ImageUploaded, _: &mut Context<Self>) -> Self::Result {
         let Ok(msg_json) = msg.to_output_json_string() else {
-            warn!("Can't parse event to json");
+            warn!("Can't parse image uploaded event to json");
+            return;
+        };
+        self.send_msg_to_lobby(&msg.lobby_id, &msg_json);
+    }
+}
+
+impl Handler<ImageDeleted> for NotifyServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: ImageDeleted, _: &mut Context<Self>) -> Self::Result {
+        let Ok(msg_json) = msg.to_output_json_string() else {
+            warn!("Can't parse image deleted event to json");
             return;
         };
         self.send_msg_to_lobby(&msg.lobby_id, &msg_json);

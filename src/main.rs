@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::{
-    error,
+    error::InternalError,
     http::header,
     middleware::Logger,
     web::{Data, JsonConfig},
@@ -32,14 +32,14 @@ async fn main() -> std::io::Result<()> {
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
 
-    HttpServer::new(move || {
-        // json configuration
-        let json_cfg = JsonConfig::default()
-            .limit(10 * 1024 * 1024) // limit request payload size to 10MB
-            .error_handler(|err, _| {
-                error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
-            });
+    // json configuration
+    let json_cfg = JsonConfig::default()
+        .limit(10 * 1024 * 1024) // limit request payload size to 10MB
+        .error_handler(|err, _| {
+            InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
+        });
 
+    HttpServer::new(move || {
         // Create app
         App::new()
             // -------------
@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
             // -------------
             .wrap(Logger::default())
             .wrap(cors_cfg())
-            .app_data(json_cfg)
+            .app_data(json_cfg.clone())
             // -------------
             // Notifications
             // -------------

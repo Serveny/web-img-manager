@@ -1,5 +1,9 @@
 use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
-use actix_web::{http::header, web, HttpResponse, Responder};
+use actix_web::{
+    http::header,
+    web::{self},
+    HttpResponse, Responder,
+};
 use base64::{engine::general_purpose::STANDARD as Base64, Engine};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use regex::Regex;

@@ -12,7 +12,7 @@
     <button onclick="deleteOnServer(lobby_id)">Delete lobby</button>
     <button onclick="deleteOnServer(lobby_id, room_id)">Delete room</button>
     <button
-      onclick="deleteOnServer(lobby_id, room_id, document.getElementsByTagName('img')[0].getAttribute('data-img-name'))">Delete
+      onclick="deleteOnServer(lobby_id, room_id, document.getElementsByTagName('img')[0].getAttribute('data-img-id'))">Delete
       first image</button>
   </div>
   <div></div>
@@ -45,10 +45,14 @@
   function addImg(imgId, divs, isThumb) {
     const imgEl = document.createElement("img");
     imgEl.src = `http://${server}/img/${isThumb ? 'thumb/' : ''}${lobby_id}/${room_id}/${imgId}`;
-    imgEl.setAttribute("data-img-name", imgId);
+    imgEl.setAttribute("data-img-id", imgId);
     imgEl.style = "float:left; max-width: 100%";
     if (isThumb) divs[1].append(imgEl);
     else divs[2].append(imgEl);
+  }
+
+  function removeImgs(imgId) {
+    document.querySelectorAll(`img[data-img-id='${imgId}']`).forEach((imgEl) => imgEl.parentNode.removeChild(imgEl));
   }
 
   async function readFile(file) {
@@ -113,6 +117,9 @@
           break;
         case "ImageUploaded":
           addImgs(ev.img_id);
+          break;
+        case "ImageDeleted":
+          removeImgs(ev.img_id);
           break;
       }
     });

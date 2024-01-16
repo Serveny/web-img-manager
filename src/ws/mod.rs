@@ -5,7 +5,7 @@ use actix_web::{
     web::{Data, Path, Payload},
     Error, HttpRequest, HttpResponse,
 };
-use actix_web_actors::ws::{self, Message, Message::Text};
+use actix_web_actors::ws::{self};
 use log::debug;
 use messages::{Connect, Disconnect, WsMessage};
 use server::NotifyServer;
@@ -95,23 +95,23 @@ impl Actor for WsConn {
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
-            Ok(Message::Ping(msg)) => {
+            Ok(ws::Message::Ping(msg)) => {
                 self.hb = Instant::now();
                 ctx.pong(&msg);
             }
-            Ok(Message::Pong(_)) => {
+            Ok(ws::Message::Pong(_)) => {
                 self.hb = Instant::now();
             }
-            Ok(Message::Binary(bin)) => ctx.binary(bin),
-            Ok(Message::Close(reason)) => {
+            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
+            Ok(ws::Message::Close(reason)) => {
                 ctx.close(reason);
                 ctx.stop();
             }
-            Ok(Message::Continuation(_)) => {
+            Ok(ws::Message::Continuation(_)) => {
                 ctx.stop();
             }
-            Ok(Message::Nop) => (),
-            Ok(Text(s)) => debug!("Text send: {}", s),
+            Ok(ws::Message::Nop) => (),
+            Ok(ws::Message::Text(s)) => debug!("Text send: {}", s),
             Err(e) => println!("{}", e),
         }
     }

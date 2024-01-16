@@ -10,7 +10,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] ❌ delete lobby & room folders
 - [x] ❌ delete images
 - [x] 📰 upload live notification
-- [ ] 📰 delete live notification
+- [x] 📰 delete live notification
 - [ ] 💬 live chat
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
@@ -85,15 +85,21 @@ Little project to up and download image files to/from an actix rust server and g
     <th>Content</th>
   </tr>
   <tr>
-    <td>Receive</td>
+    <td>Server -> Client</td>
     <td>Self connected notification</td>
     <td>JSON</td>
     <td><code>event</code>: "Connected", <code>session_id</code></td>
   </tr>
   <tr>
-    <td>Receive</td>
+    <td>Server -> Client</td>
     <td>Image uploaded notification</td>
     <td>JSON</td>
     <td><code>event</code>: "ImageUploaded", <code>room_id</code>, <code>img_id</code></td>
+  </tr>
+  <tr>
+    <td>Server -> Client</td>
+    <td>Image deleted notification</td>
+    <td>JSON</td>
+    <td><code>event</code>: "ImageDeleted", <code>room_id</code>, <code>img_id</code></td>
   </tr>
 </table>

@@ -4,7 +4,10 @@ use crate::{
         base64_to_img, delete_folder, get_filenames_as_u32, get_img, img_id_to_filename,
         resize_image, save_img, ImgType,
     },
-    ws::{messages::ImageUploaded, server::NotifyServer},
+    ws::{
+        messages::{ImageDeleted, ImageUploaded},
+        server::NotifyServer,
+    },
     ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
@@ -15,6 +18,7 @@ use actix_web::{
     web::{self, Data, Json},
     HttpResponse, Responder,
 };
+use log::warn;
 use serde::Deserialize;
 use std::{
     fs::{self},
@@ -80,13 +84,11 @@ pub async fn upload_img(
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
 
-    // Notify users about image upload
-    if let Err(err) = notify
+    // Notify users
+    notify
         .send(ImageUploaded::new(lobby_id, room_id, img_id))
         .await
-    {
-        println!("{}", err);
-    }
+        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
     // Send image id back
     HttpResponse::Ok()
@@ -109,7 +111,10 @@ pub async fn delete_room(path: web::Path<(LobbyId, RoomId)>) -> impl Responder {
 }
 
 #[post("/delete/{lobby_id}/{room_id}/{file}")]
-pub async fn delete_img(path: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+pub async fn delete_img(
+    path: web::Path<(LobbyId, RoomId, ImgId)>,
+    notify: Data<Addr<NotifyServer>>,
+) -> impl Responder {
     let room_path = Path::new(IMG_STORAGE_PATH)
         .join(path.0.to_string())
         .join(path.1.to_string());
@@ -122,6 +127,12 @@ pub async fn delete_img(path: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Respo
     // Delete thumb image
     let thumb_path = room_path.join("thumb").join(filename);
     fs::remove_file(thumb_path).unwrap_or_default();
+
+    // Notify users
+    notify
+        .send(ImageDeleted::new(path.0, path.1, path.2))
+        .await
+        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
     HttpResponse::Ok().finish()
 }
