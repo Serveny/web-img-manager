@@ -13,6 +13,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📰 delete live notification
 - [ ] 💬 live chat
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
+- [ ] 🫶 example HTML/CSS/JS frontend application with usable communication class
 
 ## API
 
