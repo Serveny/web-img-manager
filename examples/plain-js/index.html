@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test img web manager</title>
+  <script src="main.js"></script>
+</head>
+
+<body style="background-color: dimgray;">
+  <div>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">Upload image</button>
+    <button onclick="deleteOnServer(lobby_id)">Delete lobby</button>
+    <button onclick="deleteOnServer(lobby_id, room_id)">Delete room</button>
+    <button
+      onclick="deleteOnServer(lobby_id, room_id, document.getElementsByTagName('img')[0].getAttribute('data-img-id'))">Delete
+      first image</button>
+  </div>
+  <div></div>
+  <div></div>
+</body>
+
+</html>
