@@ -3,7 +3,7 @@ use serde::Serialize;
 use ts_rs::TS;
 
 #[derive(TS)]
-#[ts(export)]
+#[ts(export, export_to = "examples/ts-application/src/bindings/")]
 #[derive(Serialize)]
 pub struct ConnectEvent {
     pub event: &'static str,
@@ -11,7 +11,7 @@ pub struct ConnectEvent {
 }
 
 #[derive(TS)]
-#[ts(export)]
+#[ts(export, export_to = "examples/ts-application/src/bindings/")]
 #[derive(Serialize)]
 pub struct ImageProcessedEvent {
     pub event: &'static str,
