@@ -44,7 +44,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
     <td>JSON</td>
-    <td>JSON encoded list of int img_id's (example: `[1,2,3,4,8]`)</td>
+    <td>JSON encoded list of int img_id's (example: <code>[1,2,3,4,8]</code>)</td>
   </tr>
   <tr>
     <td>get thumb image</td>
@@ -68,7 +68,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td><code>/upload</code></td>
     <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
     <td>JSON</td>
-    <td>img_id (example: <code>`{img_id: 3}`</code>)</td>
+    <td>img_id (example: <code>{ img_id: 3 }</code>)</td>
   </tr>
   <tr>
     <td>delete room / lobby / img</td>
