@@ -19,6 +19,9 @@ pub enum ImgType {
     Big,
     Thumb,
 }
+pub trait ToOutputJsonString {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error>;
+}
 
 pub fn get_img(img_type: ImgType, info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
     let lobby_id = info.0.to_string();

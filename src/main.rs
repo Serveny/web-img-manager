@@ -12,13 +12,14 @@ use api::{
     handle_options, upload_img,
 };
 use config::SERVER;
+use notification::server::NotifyServer;
 use uuid::Uuid;
-use ws::server::NotifyServer;
 
 mod api;
 mod config;
+mod notification;
+mod public_messages;
 mod utils;
-mod ws;
 
 pub type LobbyId = Uuid;
 pub type RoomId = Uuid;
@@ -52,7 +53,7 @@ async fn main() -> std::io::Result<()> {
             // Notifications
             // -------------
             .app_data(notify_server.clone())
-            .service(ws::start_connection)
+            .service(notification::start_connection)
             // -------------
             // API
             // -------------

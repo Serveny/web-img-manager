@@ -1,7 +1,5 @@
-use super::messages::{
-    Connect, Disconnect, ImageDeleted, ImageUploaded, ToOutputJsonString, WsMessage,
-};
-use crate::LobbyId;
+use super::internal_messages::{Connect, Disconnect, ImageDeleted, ImageUploaded, WsMessage};
+use crate::{utils::ToOutputJsonString, LobbyId};
 use actix::prelude::*;
 use log::{debug, warn};
 use std::collections::{HashMap, HashSet};

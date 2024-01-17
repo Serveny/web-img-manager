@@ -6,13 +6,13 @@ use actix_web::{
     Error, HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws::{self};
+use internal_messages::{Connect, Disconnect, WsMessage};
 use log::debug;
-use messages::{Connect, Disconnect, WsMessage};
 use server::NotifyServer;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-pub mod messages;
+pub mod internal_messages;
 pub mod server;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);

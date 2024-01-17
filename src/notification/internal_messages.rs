@@ -1,12 +1,10 @@
-use crate::{ImgId, LobbyId, RoomId, SessionId};
+use crate::{
+    public_messages::ws::{ConnectEvent, ImageProcessedEvent},
+    utils::ToOutputJsonString,
+    ImgId, LobbyId, RoomId, SessionId,
+};
 use actix::prelude::*;
-use serde::{Deserialize, Serialize};
 use serde_json::Error;
-use uuid::Uuid;
-
-pub trait ToOutputJsonString {
-    fn to_output_json_string(&self) -> Result<String, Error>;
-}
 
 // WsConn responds to this to pipe it through to the actual client
 #[derive(Message)]
@@ -22,15 +20,9 @@ pub struct Connect {
     pub session_id: SessionId,
 }
 
-#[derive(Serialize, Deserialize)]
-struct ConnectOutputEvent {
-    pub event: &'static str,
-    pub session_id: Uuid,
-}
-
 impl ToOutputJsonString for Connect {
     fn to_output_json_string(&self) -> Result<String, Error> {
-        serde_json::to_string(&ConnectOutputEvent {
+        serde_json::to_string(&ConnectEvent {
             event: "Connected",
             session_id: self.session_id,
         })
@@ -53,6 +45,26 @@ pub struct ImageUploaded {
     pub img_id: ImgId,
 }
 
+impl ImageUploaded {
+    pub fn new(lobby_id: LobbyId, room_id: RoomId, img_id: ImgId) -> Self {
+        Self {
+            lobby_id,
+            room_id,
+            img_id,
+        }
+    }
+}
+
+impl ToOutputJsonString for ImageUploaded {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&ImageProcessedEvent {
+            event: "ImageUploaded",
+            room_id: self.room_id,
+            img_id: self.img_id,
+        })
+    }
+}
+
 // image was uploaded
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -62,45 +74,19 @@ pub struct ImageDeleted {
     pub img_id: ImgId,
 }
 
-#[derive(Serialize, Deserialize)]
-struct ImageProcessedOutputEvent {
-    pub event: &'static str,
-    pub room_id: Uuid,
-    pub img_id: u32,
-}
-
-impl ImageUploaded {
-    pub fn new(lobby_id: Uuid, room_id: Uuid, img_id: u32) -> Self {
-        Self {
-            lobby_id,
-            room_id,
-            img_id,
-        }
-    }
-}
-
 impl ImageDeleted {
-    pub fn new(lobby_id: Uuid, room_id: Uuid, img_id: u32) -> Self {
+    pub fn new(lobby_id: LobbyId, room_id: RoomId, img_id: ImgId) -> Self {
         Self {
             lobby_id,
             room_id,
             img_id,
         }
-    }
-}
-impl ToOutputJsonString for ImageUploaded {
-    fn to_output_json_string(&self) -> Result<String, Error> {
-        serde_json::to_string(&ImageProcessedOutputEvent {
-            event: "ImageUploaded",
-            room_id: self.room_id,
-            img_id: self.img_id,
-        })
     }
 }
 
 impl ToOutputJsonString for ImageDeleted {
-    fn to_output_json_string(&self) -> Result<String, Error> {
-        serde_json::to_string(&ImageProcessedOutputEvent {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&ImageProcessedEvent {
             event: "ImageDeleted",
             room_id: self.room_id,
             img_id: self.img_id,

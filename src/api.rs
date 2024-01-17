@@ -1,12 +1,13 @@
 use crate::{
     config::IMG_STORAGE_PATH,
+    notification::{
+        internal_messages::{ImageDeleted, ImageUploaded},
+        server::NotifyServer,
+    },
+    public_messages::api::UploadRequest,
     utils::{
         base64_to_img, delete_folder, get_filenames_as_u32, get_img, img_id_to_filename,
         resize_image, save_img, ImgType,
-    },
-    ws::{
-        messages::{ImageDeleted, ImageUploaded},
-        server::NotifyServer,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -19,7 +20,6 @@ use actix_web::{
     HttpResponse, Responder,
 };
 use log::warn;
-use serde::Deserialize;
 use std::{
     fs::{self},
     path::Path,
@@ -50,13 +50,6 @@ pub async fn handle_options() -> impl Responder {
     HttpResponse::Ok()
         .insert_header((header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
         .finish()
-}
-
-#[derive(Deserialize)]
-pub struct UploadRequest {
-    lobby_id: LobbyId,
-    room_id: RoomId,
-    image: String,
 }
 
 #[post("/upload")]
