@@ -1,5 +1,5 @@
-use crate::{LobbyId, RoomId};
-use serde::Deserialize;
+use crate::{ImgId, LobbyId, RoomId};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(TS)]
@@ -10,3 +10,13 @@ pub struct UploadRequest {
     pub room_id: RoomId,
     pub image: String,
 }
+
+#[derive(TS)]
+#[ts(export, export_to = "examples/ts-application/src/bindings/")]
+#[derive(Serialize)]
+pub struct UploadResult {
+    pub img_id: ImgId,
+}
+
+#[derive(Serialize)]
+pub struct Success;

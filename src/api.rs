@@ -4,7 +4,7 @@ use crate::{
         internal_messages::{ImageDeleted, ImageUploaded},
         server::NotifyServer,
     },
-    public_messages::api::UploadRequest,
+    public_messages::api::{Success, UploadRequest, UploadResult},
     utils::{
         base64_to_img, delete_folder, get_filenames_as_u32, get_img, img_id_to_filename,
         resize_image, save_img, ImgType,
@@ -86,7 +86,7 @@ pub async fn upload_img(
     // Send image id back
     HttpResponse::Ok()
         .insert_header((header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
-        .body(img_id.to_string())
+        .json(UploadResult { img_id })
 }
 
 #[post("/delete/{lobby_id}")]
@@ -127,5 +127,5 @@ pub async fn delete_img(
         .await
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
-    HttpResponse::Ok().finish()
+    HttpResponse::Ok().json(Success)
 }

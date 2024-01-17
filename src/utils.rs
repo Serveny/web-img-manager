@@ -1,4 +1,4 @@
-use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
+use crate::{config::IMG_STORAGE_PATH, public_messages::api::Success, ImgId, LobbyId, RoomId};
 use actix_web::{
     http::header,
     web::{self},
@@ -152,7 +152,7 @@ pub fn delete_folder(folder_path: &PathBuf) -> impl Responder {
             .body(format!("Could not delete folder {:?}", folder_path));
     }
 
-    HttpResponse::Ok().finish()
+    HttpResponse::Ok().json(Success)
 }
 
 pub fn img_id_to_filename(img_id: ImgId) -> String {

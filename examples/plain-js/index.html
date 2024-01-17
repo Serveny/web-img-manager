@@ -3,18 +3,17 @@
 
 <head>
   <title>Test img web manager</title>
-  <script src="main.js"></script>
+  <script src="scripts/web-img-manager.js"></script>
+  <script src="scripts/main.js"></script>
 </head>
 
 <body style="background-color: dimgray;">
   <div>
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="uploadImage()">Upload image</button>
-    <button onclick="deleteOnServer(lobby_id)">Delete lobby</button>
-    <button onclick="deleteOnServer(lobby_id, room_id)">Delete room</button>
-    <button
-      onclick="deleteOnServer(lobby_id, room_id, document.getElementsByTagName('img')[0].getAttribute('data-img-id'))">Delete
-      first image</button>
+    <button onclick="web_img_manager.delete(lobby_id)">Delete lobby</button>
+    <button onclick="web_img_manager.delete(lobby_id, room_id)">Delete room</button>
+    <button onclick="deleteFirstImage()">Delete first image</button>
   </div>
   <div></div>
   <div></div>

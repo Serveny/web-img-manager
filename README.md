@@ -10,7 +10,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] ❌ delete lobby & room folders
 - [x] ❌ delete images
 - [x] 📰 upload live notification
-- [x] 📰 delete live notification
+- [ ] 📰 delete lobby/room/image live notification
 - [x] 🔗 TS bindins for public messages
 - [ ] 💬 live chat
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
@@ -35,6 +35,7 @@ Little project to up and download image files to/from an actix rust server and g
     <th>Method</th>
     <th>URL</th>
     <th>Parameters</th>
+    <th>Return format</th>
     <th>Returns</th>
   </tr>
   <tr>
@@ -42,6 +43,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td>GET</td>
     <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
+    <td>JSON</td>
     <td>JSON encoded list of int img_id's (example: `[1,2,3,4,8]`)</td>
   </tr>
   <tr>
@@ -49,6 +51,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td>GET</td>
     <td><code>/img/thumb/{lobby_id}/{room_id}/{img_id}</code></td>
     <td>None</td>
+    <td>.jpg</td>
     <td>thumb image file</td>
   </tr>
   <tr>
@@ -56,6 +59,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td>GET</td>
     <td><code>/img/{lobby_id}/{room_id}/{img_id}</code></td>
     <td>None</td>
+    <td>.jpg</td>
     <td>image file</td>
   </tr>
   <tr>
@@ -63,6 +67,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td>POST</td>
     <td><code>/upload</code></td>
     <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
+    <td>JSON</td>
     <td>img_id (example: <code>3</code>)</td>
   </tr>
   <tr>
@@ -70,14 +75,16 @@ Little project to up and download image files to/from an actix rust server and g
     <td>POST</td>
     <td><code>/delete/{lobby_id?}/{room_id?}/{img_id?}</code></td>
     <td>None</td>
-    <td>OK</td>
+    <td>JSON</td>
+    <td>null</td>
   </tr>
   <tr>
     <td>connect to websocket</td>
     <td>GET</td>
     <td><code>/ws/{lobby_id}</code></td>
     <td>None</td>
-    <td>OK</td>
+    <td>JSON</td>
+    <td>null</td>
   </tr>
 </table>
 
