@@ -1,13 +1,13 @@
 use crate::{
     config::IMG_STORAGE_PATH,
     notification::{
-        internal_messages::{ImageDeleted, ImageUploaded},
+        internal_messages::{ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
     },
     public_messages::api::{Success, UploadRequest, UploadResult},
     utils::{
-        base64_to_img, delete_folder, get_filenames_as_u32, get_img, img_id_to_filename,
-        resize_image, save_img, ImgType,
+        base64_to_img, get_filenames_as_u32, get_img, img_id_to_filename, resize_image, save_img,
+        ImgType,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -90,17 +90,49 @@ pub async fn upload_img(
 }
 
 #[post("/delete/{lobby_id}")]
-pub async fn delete_lobby(path: web::Path<(LobbyId,)>) -> impl Responder {
+pub async fn delete_lobby(
+    path: web::Path<(LobbyId,)>,
+    notify: Data<Addr<NotifyServer>>,
+) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH).join(path.0.to_string());
-    delete_folder(&folder_path)
+
+    // Delete room folder
+    if fs::remove_dir_all(&folder_path).is_err() {
+        return HttpResponse::InternalServerError()
+            .body(format!("Could not delete folder {:?}", folder_path));
+    }
+
+    // Notify users
+    notify
+        .send(LobbyDeleted::new(path.0))
+        .await
+        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
+
+    HttpResponse::Ok().json(Success)
 }
 
 #[post("/delete/{lobby_id}/{room_id}")]
-pub async fn delete_room(path: web::Path<(LobbyId, RoomId)>) -> impl Responder {
+pub async fn delete_room(
+    path: web::Path<(LobbyId, RoomId)>,
+    notify: Data<Addr<NotifyServer>>,
+) -> impl Responder {
     let folder_path = Path::new(IMG_STORAGE_PATH)
         .join(path.0.to_string())
         .join(path.1.to_string());
-    delete_folder(&folder_path)
+
+    // Delete room folder
+    if fs::remove_dir_all(&folder_path).is_err() {
+        return HttpResponse::InternalServerError()
+            .body(format!("Could not delete folder {:?}", folder_path));
+    }
+
+    // Notify users
+    notify
+        .send(RoomDeleted::new(path.0, path.1))
+        .await
+        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
+
+    HttpResponse::Ok().json(Success)
 }
 
 #[post("/delete/{lobby_id}/{room_id}/{file}")]

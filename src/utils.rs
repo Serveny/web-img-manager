@@ -1,4 +1,4 @@
-use crate::{config::IMG_STORAGE_PATH, public_messages::api::Success, ImgId, LobbyId, RoomId};
+use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
 use actix_web::{
     http::header,
     web::{self},
@@ -144,15 +144,6 @@ pub fn get_filenames_as_u32(folder_path: &PathBuf) -> Vec<ImgId> {
         .ok()
         .map(|entries| entries.filter_map(entry_to_u32).collect())
         .unwrap_or_else(Vec::new)
-}
-
-pub fn delete_folder(folder_path: &PathBuf) -> impl Responder {
-    if fs::remove_dir_all(folder_path).is_err() {
-        return HttpResponse::InternalServerError()
-            .body(format!("Could not delete folder {:?}", folder_path));
-    }
-
-    HttpResponse::Ok().json(Success)
 }
 
 pub fn img_id_to_filename(img_id: ImgId) -> String {

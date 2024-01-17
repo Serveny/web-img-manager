@@ -1,5 +1,5 @@
 use crate::{
-    public_messages::ws::{ConnectEvent, ImageProcessedEvent},
+    public_messages::ws::{ConnectEvent, ImageProcessedEvent, LobbyDeletedEvent, RoomDeletedEvent},
     utils::ToOutputJsonString,
     ImgId, LobbyId, RoomId, SessionId,
 };
@@ -90,6 +90,48 @@ impl ToOutputJsonString for ImageDeleted {
             event: "ImageDeleted",
             room_id: self.room_id,
             img_id: self.img_id,
+        })
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct RoomDeleted {
+    pub lobby_id: LobbyId,
+    pub room_id: RoomId,
+}
+
+impl RoomDeleted {
+    pub fn new(lobby_id: LobbyId, room_id: RoomId) -> Self {
+        Self { lobby_id, room_id }
+    }
+}
+
+impl ToOutputJsonString for RoomDeleted {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&RoomDeletedEvent {
+            event: "RoomDeleted",
+            room_id: self.room_id,
+        })
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct LobbyDeleted {
+    pub lobby_id: LobbyId,
+}
+
+impl LobbyDeleted {
+    pub fn new(lobby_id: LobbyId) -> Self {
+        Self { lobby_id }
+    }
+}
+
+impl ToOutputJsonString for LobbyDeleted {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&LobbyDeletedEvent {
+            event: "LobbyDeleted",
         })
     }
 }

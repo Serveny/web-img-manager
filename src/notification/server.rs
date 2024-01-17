@@ -1,4 +1,6 @@
-use super::internal_messages::{Connect, Disconnect, ImageDeleted, ImageUploaded, WsMessage};
+use super::internal_messages::{
+    Connect, Disconnect, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted, WsMessage,
+};
 use crate::{utils::ToOutputJsonString, LobbyId};
 use actix::prelude::*;
 use log::{debug, warn};
@@ -126,6 +128,30 @@ impl Handler<ImageDeleted> for NotifyServer {
     fn handle(&mut self, msg: ImageDeleted, _: &mut Context<Self>) -> Self::Result {
         let Ok(msg_json) = msg.to_output_json_string() else {
             warn!("Can't parse image deleted event to json");
+            return;
+        };
+        self.send_msg_to_lobby(&msg.lobby_id, &msg_json);
+    }
+}
+
+impl Handler<RoomDeleted> for NotifyServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: RoomDeleted, _: &mut Context<Self>) -> Self::Result {
+        let Ok(msg_json) = msg.to_output_json_string() else {
+            warn!("Can't parse room deleted event to json");
+            return;
+        };
+        self.send_msg_to_lobby(&msg.lobby_id, &msg_json);
+    }
+}
+
+impl Handler<LobbyDeleted> for NotifyServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: LobbyDeleted, _: &mut Context<Self>) -> Self::Result {
+        let Ok(msg_json) = msg.to_output_json_string() else {
+            warn!("Can't parse lobby deleted event to json");
             return;
         };
         self.send_msg_to_lobby(&msg.lobby_id, &msg_json);

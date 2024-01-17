@@ -4,19 +4,23 @@
 <head>
   <title>Test img web manager</title>
   <script src="scripts/web-img-manager.js"></script>
-  <script src="scripts/main.js"></script>
 </head>
 
 <body style="background-color: dimgray;">
-  <div>
+  <div id="control-panel">
+    <select id="room-select">
+      <option value="10f70fb4-c9c7-4c0d-abcf-13e2cd49a85a" selected="selected">Room 1</option>
+      <option value="9b5938c0-ae34-42a4-b459-06124ae70ffa">Room 2</option>
+      <option value="1ac5bff8-2b85-4634-8e0f-370d60cf0d6a">Room 3</option>
+    </select>
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="uploadImage()">Upload image</button>
     <button onclick="web_img_manager.delete(lobby_id)">Delete lobby</button>
-    <button onclick="web_img_manager.delete(lobby_id, room_id)">Delete room</button>
+    <button onclick="web_img_manager.delete(lobby_id, roomSelect.value)">Delete room</button>
     <button onclick="deleteFirstImage()">Delete first image</button>
   </div>
-  <div></div>
-  <div></div>
+  <div id="lobby"></div>
+  <script src="scripts/main.js"></script>
 </body>
 
 </html>
