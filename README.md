@@ -3,7 +3,7 @@
 Little project to up and download image files to/from an actix rust server and get live notification with web sockets. It is intended for a web application in which there are different lobbies, each of which has rooms where you can chat or share your pictures with others.
 
 <p align="center">
-  <img src="./demo-animation.gif"/>
+  <img src="demo_animation.gif"/>
 </p>
 
 ## Features
