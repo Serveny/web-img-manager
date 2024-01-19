@@ -24,16 +24,6 @@ impl NotifyServer {
         }
     }
 
-    fn send_msg(&self, session_id: &SessionId, msg: &impl ToOutputJsonString) {
-        match msg.to_output_json_string() {
-            Ok(msg_json) => self.send_string(session_id, &msg_json),
-            Err(err) => {
-                warn!("Can't parse event to json: {}", err);
-                return;
-            }
-        };
-    }
-
     fn send_msg_to_lobby(&self, lobby_id: &LobbyId, msg: &str) {
         let Some(lobby) = self.lobbies.get(lobby_id) else {
             warn!("Lobby {} not found", lobby_id);
@@ -68,9 +58,6 @@ impl Handler<Connect> for NotifyServer {
             .insert(msg.session_id);
 
         debug!("Lobbies: {:?}", self.lobbies);
-
-        // send self your new uuid
-        self.send_msg(&msg.session_id, &msg);
 
         // store the address
         self.sessions.insert(msg.session_id, msg.addr);
