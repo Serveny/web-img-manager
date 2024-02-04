@@ -15,7 +15,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] ❌ delete images
 - [x] 📰 upload live notification
 - [x] 📰 delete lobby/room/image live notification
-- [x] 🔗 TS bindins for public messages
+- [ ] 🔗 TS bindins for public messages
 - [ ] 💬 live chat
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
