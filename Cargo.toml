@@ -1,3 +1,4 @@
+workspace = { members = ["admin-control-planel"] }
 [package]
 name = "web-img-manager"
 version = "0.1.0"
