@@ -9,7 +9,7 @@ use actix_web::{
 };
 use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
-    handle_options, upload_img,
+    get_room_list, handle_options, upload_img,
 };
 use config::SERVER;
 use notification::server::NotifyServer;
@@ -57,6 +57,7 @@ async fn main() -> std::io::Result<()> {
             // -------------
             // API
             // -------------
+            .service(get_room_list)
             .service(get_room_img_list)
             .service(get_img_thumb)
             .service(get_img_big)

@@ -146,6 +146,19 @@ pub fn get_filenames_as_u32(folder_path: &PathBuf) -> Vec<ImgId> {
         .unwrap_or_else(Vec::new)
 }
 
+pub fn get_foldernames_as_uuid(folder_path: &PathBuf) -> Vec<RoomId> {
+    let entry_to_uuid = |entry: Result<DirEntry, Error>| {
+        entry.ok().and_then(|e| match e.path().is_dir() {
+            true => e.file_name().to_string_lossy().parse::<Uuid>().ok(),
+            false => None,
+        })
+    };
+    fs::read_dir(folder_path)
+        .ok()
+        .map(|entries| entries.filter_map(entry_to_uuid).collect())
+        .unwrap_or_else(Vec::new)
+}
+
 pub fn img_id_to_filename(img_id: ImgId) -> String {
     format!("{}.jpg", img_id)
 }

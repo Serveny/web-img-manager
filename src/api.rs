@@ -6,8 +6,8 @@ use crate::{
     },
     public_messages::api::{Success, UploadRequest, UploadResult},
     utils::{
-        base64_to_img, get_filenames_as_u32, get_img, img_id_to_filename, resize_image, save_img,
-        ImgType,
+        base64_to_img, get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename,
+        resize_image, save_img, ImgType,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -24,6 +24,15 @@ use std::{
     fs::{self},
     path::Path,
 };
+
+#[get("/list/{lobby_id}")]
+pub async fn get_room_list(info: web::Path<(LobbyId,)>) -> impl Responder {
+    let lobby_id = info.0.to_string();
+    let folder_path = Path::new(IMG_STORAGE_PATH).join(lobby_id);
+    let filenames = get_foldernames_as_uuid(&folder_path);
+
+    HttpResponse::Ok().json(filenames)
+}
 
 #[get("/list/{lobby_id}/{room_id}")]
 pub async fn get_room_img_list(info: web::Path<(LobbyId, RoomId)>) -> impl Responder {

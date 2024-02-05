@@ -45,7 +45,15 @@ Little project to up and download image files to/from an actix rust server and g
     <th>Returns</th>
   </tr>
   <tr>
-    <td>get image name list</td>
+    <td>get room list for lobby</td>
+    <td>GET</td>
+    <td><code>/list/{lobby_id}/</code></td>
+    <td>None</td>
+    <td>JSON</td>
+    <td>JSON encoded list of room_id's <br><code>["9b5938c0-ae34-42a4-b459-06124ae70ffa", "10f70fb4-c9c7-4c0d-abcf-13e2cd49a85a"]</code></td>
+  </tr>
+  <tr>
+    <td>get image name list for room</td>
     <td>GET</td>
     <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
