@@ -37,7 +37,7 @@ fn NavBar() -> Html {
 
 #[function_component]
 fn Rooms() -> HtmlResult {
-    let res = use_future(|| async { get_json("list/6a766d31-71d5-4a34-8df5-124b9614b19f").await })?;
+    let res = use_future(|| get_json("list/6a766d31-71d5-4a34-8df5-124b9614b19f"))?;
     let res: &Vec<Uuid> = match *res {
         Ok(ref res) => res,
         Err(ref err) => return Ok(html! { err.to_string() }),
