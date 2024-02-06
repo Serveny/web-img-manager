@@ -1,4 +1,6 @@
 mod app;
+mod comps;
+mod utils;
 
 use app::App;
 
