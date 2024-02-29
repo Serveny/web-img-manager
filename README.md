@@ -84,7 +84,6 @@ Little project to up and download image files to/from an actix rust server and g
     <td>JSON</td>
     <td>image upload result<br><code>{ img_id: 3 }</code></td>
   </tr>
- 
   <tr>
     <td>connect to websocket</td>
     <td>GET</td>
@@ -101,6 +100,14 @@ Little project to up and download image files to/from an actix rust server and g
     <td>POST</td>
     <td><code>/delete/{lobby_id?}/{room_id?}/{img_id?}</code></td>
     <td>None</td>
+    <td>JSON</td>
+    <td>null</td>
+  </tr>
+<tr>
+    <td>send chat message</td>
+    <td>POST</td>
+    <td><code>/chat</code></td>
+    <td><code>lobby_id</code>: String<br><code>msg</code>: String<br></td>
     <td>JSON</td>
     <td>null</td>
   </tr>
@@ -132,5 +139,11 @@ Little project to up and download image files to/from an actix rust server and g
     <td>Image deleted notification</td>
     <td>JSON</td>
     <td><code>event</code>: "ImageDeleted", <code>room_id</code>, <code>img_id</code></td>
+  </tr>
+  <tr>
+    <td>Server -> Client</td>
+    <td>Chat message notification</td>
+    <td>JSON</td>
+    <td><code>event</code>: "ChatMessage", <code>username</code>, <code>msg</code></td>
   </tr>
 </table>
