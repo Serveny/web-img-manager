@@ -24,3 +24,10 @@ pub struct RoomDeletedEvent {
 pub struct LobbyDeletedEvent {
     pub event: &'static str,
 }
+
+#[derive(Serialize)]
+pub struct ChatMessageEvent<'a> {
+    pub event: &'static str,
+    pub username: &'a str,
+    pub msg: &'a str,
+}

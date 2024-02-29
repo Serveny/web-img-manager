@@ -15,3 +15,9 @@ pub struct UploadResult {
 
 #[derive(Serialize)]
 pub struct Success;
+
+#[derive(Deserialize)]
+pub struct ChatMessageRequest {
+    pub lobby_id: LobbyId,
+    pub msg: String,
+}

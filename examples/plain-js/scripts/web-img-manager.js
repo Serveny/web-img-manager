@@ -61,6 +61,18 @@ class WebImgManager {
   }
 
   /**
+   * Sends chat message to server
+   * @param {string} lobby_id - Uuid v4 lobby identificator
+   * @param {string} msg- Chat message
+   * @return {Promise<void>}
+   * @throws {Error} response error
+   */
+  async sendChatMessage(lobby_id, msg) {
+    let url = `http://${server_addr}/chat`;
+    return send(url, 'POST', { lobby_id, msg });
+  }
+
+  /**
    * Connects to web img manager web socket server and register events
    * @param {string} lobby_id - Uuid v4 lobby identificator
    * @return {WebImgManager}
@@ -157,6 +169,7 @@ class Notifications {
   onRoomDeleted(handler) {
     this.emitter.on('RoomDeleted', handler);
   }
+
   /**
    * Register event listener
    * @param {function} handler - event handler
@@ -164,6 +177,15 @@ class Notifications {
    */
   onImageDeleted(handler) {
     this.emitter.on('ImageDeleted', handler);
+  }
+
+  /**
+   * Register event listener
+   * @param {function} handler - event handler
+   * @return {void} request result as object parsed from JSON
+   */
+  onChatMessage(handler) {
+    this.emitter.on('ChatMessage', handler);
   }
 }
 

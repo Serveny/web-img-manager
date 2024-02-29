@@ -3,6 +3,7 @@
 
 <head>
   <title>Test img web manager</title>
+  <link rel="stylesheet" href="styles/main.css" />
   <script src="scripts/web-img-manager.js"></script>
 </head>
 
@@ -20,6 +21,11 @@
     <button onclick="deleteFirstImage()">Delete first image</button>
   </div>
   <div id="lobby"></div>
+  <div id="chat-messages"></div>
+  <div id="chat-box">
+    <input type="text" id="chat-input" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+    <button onclick="sendChatMessage()">Send</button>
+  </div>
   <script src="scripts/main.js"></script>
 </body>
 

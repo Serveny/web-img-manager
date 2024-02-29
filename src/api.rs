@@ -1,10 +1,10 @@
 use crate::{
     config::IMG_STORAGE_PATH,
     notification::{
-        internal_messages::{ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
+        internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
     },
-    public_messages::api::{Success, UploadRequest, UploadResult},
+    public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
         base64_to_img, get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename,
         resize_image, save_img, ImgType,
@@ -165,6 +165,24 @@ pub async fn delete_img(
     // Notify users
     notify
         .send(ImageDeleted::new(path.0, path.1, path.2))
+        .await
+        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
+
+    HttpResponse::Ok().json(Success)
+}
+
+#[post("/chat")]
+pub async fn send_chat_message(
+    payload: Json<ChatMessageRequest>,
+    notify: Data<Addr<NotifyServer>>,
+) -> impl Responder {
+    let request = payload.0;
+    let lobby_id = request.lobby_id;
+    let msg = request.msg;
+
+    // Notify users
+    notify
+        .send(ChatMessage::new(lobby_id, String::from("User"), msg))
         .await
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 

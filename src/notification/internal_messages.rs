@@ -1,5 +1,7 @@
 use crate::{
-    public_messages::ws::{ConnectEvent, ImageProcessedEvent, LobbyDeletedEvent, RoomDeletedEvent},
+    public_messages::ws::{
+        ChatMessageEvent, ConnectEvent, ImageProcessedEvent, LobbyDeletedEvent, RoomDeletedEvent,
+    },
     utils::ToOutputJsonString,
     ImgId, LobbyId, RoomId, SessionId,
 };
@@ -132,6 +134,34 @@ impl ToOutputJsonString for LobbyDeleted {
     fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&LobbyDeletedEvent {
             event: "LobbyDeleted",
+        })
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ChatMessage {
+    pub lobby_id: LobbyId,
+    pub username: String,
+    pub msg: String,
+}
+
+impl ChatMessage {
+    pub fn new(lobby_id: LobbyId, username: String, msg: String) -> Self {
+        Self {
+            lobby_id,
+            username,
+            msg,
+        }
+    }
+}
+
+impl ToOutputJsonString for ChatMessage {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&ChatMessageEvent {
+            event: "ChatMessage",
+            username: &self.username,
+            msg: &self.msg,
         })
     }
 }

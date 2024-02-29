@@ -6,6 +6,8 @@ const notify = web_img_manager.notifications;
 // HTML elements
 const roomSelect = document.getElementById('room-select');
 const lobbyEl = document.getElementById('lobby');
+const chatEl = document.getElementById('chat-messages');
+const chatInputEl = document.getElementById('chat-input');
 
 // Subscribe notification events
 notify.onConnected((ev) => console.log('WS connected:', ev));
@@ -15,6 +17,7 @@ notify.onImageUploaded((ev) => addImgs(ev.room_id, ev.img_id));
 notify.onImageDeleted((ev) => removeImgs(ev.room_id, ev.img_id));
 notify.onLobbyDeleted((ev) => emtpyLobby());
 notify.onRoomDeleted((ev) => emtpyRoom(ev.room_id));
+notify.onChatMessage((ev) => showChatMessage(ev.username, ev.msg));
 
 for (const roomId of [...roomSelect.options].map((o) => o.value))
   addRoomImgsToHtml(roomId);
@@ -28,7 +31,17 @@ function getOrInsertRoomEl(room_id) {
   let roomEl = lobbyEl.querySelector(`div[data-room-id='${room_id}']`);
   if (!roomEl) {
     roomEl = document.createElement('div');
+    roomEl.className = 'room';
     roomEl.setAttribute('data-room-id', room_id);
+    roomEl.id = room_id;
+
+    label = document.createElement('label');
+    label.htmlFor = room_id;
+    label.textContent = document.querySelector(
+      `#room-select option[value="${room_id}"`
+    ).textContent;
+
+    lobbyEl.appendChild(label);
     lobbyEl.appendChild(roomEl);
   }
   return roomEl;
@@ -94,4 +107,17 @@ function emtpyRoom(roomId) {
 
 function emtpyLobby() {
   lobbyEl.replaceChildren();
+}
+
+function sendChatMessage() {
+  const chatInputEl = document.getElementById('chat-input');
+  web_img_manager.sendChatMessage(lobby_id, chatInputEl.value);
+  chatInputEl.value = '';
+}
+
+function showChatMessage(username, msg) {
+  const msgEl = document.createElement('div');
+  msgEl.innerHTML = `<b>${username}:</b> ${msg}`;
+  chatEl.append(msgEl);
+  chatEl.scrollTop = chatEl.scrollHeight - chatEl.clientHeight;
 }
