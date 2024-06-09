@@ -1,15 +1,14 @@
 use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
+use actix_multipart::form::tempfile::TempFile;
 use actix_web::{
     http::header,
     web::{self},
     HttpResponse, Responder,
 };
-use base64::{engine::general_purpose::STANDARD as Base64, Engine};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
-use regex::Regex;
 use std::{
     fs::{self, create_dir_all, DirEntry, File},
-    io::{Error, Read},
+    io::{BufReader, Error, Read},
     path::{Path, PathBuf},
 };
 use uuid::Uuid;
@@ -52,23 +51,17 @@ pub fn get_img(img_type: ImgType, info: web::Path<(LobbyId, RoomId, ImgId)>) -> 
         .body(img_content)
 }
 
-pub fn base64_to_img<'a>(base64_img: &'a str) -> Result<DynamicImage, &'static str> {
-    // Format
-    let re = Regex::new(r#"^data:(.*?);base64,"#).map_err(|_| "Wrong Regex")?;
-    let format = re
-        .captures(base64_img)
-        .and_then(|captures| captures.get(1))
-        .map(|match_group| match_group.as_str().trim())
-        .ok_or("Wrong format")?;
-    println!("{}", format);
-    let format = ImageFormat::from_mime_type(format).ok_or("Unknown format")?;
-
-    // Content
-    let mut img = base64_img.to_string();
-    let offset = base64_img.find(',').unwrap_or(img.len()) + 1;
-    img.drain(..offset);
-    let img = Base64.decode(img).map_err(|_| "Can't decode image")?;
-    let img = image::load_from_memory_with_format(&img, format).map_err(|_| "Can't load image")?;
+pub fn read_img(temp_file: &TempFile) -> Result<DynamicImage, &'static str> {
+    let Ok(file) = std::fs::File::open(&temp_file.file) else {
+        return Err("Cannot read file");
+    };
+    let reader = BufReader::new(file);
+    let format = temp_file
+        .content_type
+        .as_ref()
+        .ok_or("Can't read image format")?;
+    let format = ImageFormat::from_mime_type(format).ok_or("Unknown image format")?;
+    let img = image::load(reader, format).map_err(|_| "Image corrupt")?;
 
     Ok(img)
 }
@@ -79,6 +72,7 @@ pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> Dynam
     if width > max_width || height > max_height {
         return img.resize(max_width, max_height, FilterType::Triangle);
     }
+
     img
 }
 
@@ -110,7 +104,7 @@ pub fn save_img(
         + 1;
 
     let img_path = img_folder_path.join(img_id_to_filename(img_id));
-    if let Err(err) = img.save_with_format(img_path, ImageFormat::Jpeg) {
+    if let Err(err) = img.to_rgb8().save_with_format(img_path, ImageFormat::Jpeg) {
         return Err(err.to_string());
     }
 
@@ -122,7 +116,10 @@ pub fn save_img(
 
     // Save thumb image
     let thumb_img_path = thumb_folder_path.join(format!("{}.jpg", img_id));
-    if let Err(err) = thumb_img.save_with_format(thumb_img_path, ImageFormat::Jpeg) {
+    if let Err(err) = thumb_img
+        .to_rgb8()
+        .save_with_format(thumb_img_path, ImageFormat::Jpeg)
+    {
         return Err(err.to_string());
     }
 

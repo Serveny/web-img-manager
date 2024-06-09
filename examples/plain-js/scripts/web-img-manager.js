@@ -33,15 +33,17 @@ class WebImgManager {
    * Uploads the given image
    * @param {string} lobby_id - Uuid v4 lobby identificator
    * @param {string} room_id - Uuid v4 room identificator
-   * @param {string} image - base64 encoded image string
+   * @param {File} image - image file
    * @return {Promise<number>} int32 img_id
    * @throws {Error} response error
    */
   async upload_img(lobby_id, room_id, image) {
-    return send(`http://${server_addr}/upload`, 'POST', {
-      lobby_id,
-      room_id,
-      image,
+    const url = `http://${server_addr}/upload/${lobby_id}/${room_id}`;
+    const formData = new FormData();
+    formData.append('image', image);
+    return await fetch(url, {
+      method: 'POST',
+      body: formData,
     });
   }
 

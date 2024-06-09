@@ -1,17 +1,18 @@
 use crate::{
-    config::IMG_STORAGE_PATH,
+    config::{IMG_STORAGE_PATH, MAX_FILE_SIZE},
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
     },
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
-        base64_to_img, get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename,
+        get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
         resize_image, save_img, ImgType,
     },
     ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
+use actix_multipart::form::MultipartForm;
 use actix_web::{
     get,
     http::header,
@@ -20,10 +21,7 @@ use actix_web::{
     HttpResponse, Responder,
 };
 use log::warn;
-use std::{
-    fs::{self},
-    path::Path,
-};
+use std::{fs, path::Path};
 
 #[get("/list/{lobby_id}")]
 pub async fn get_room_list(info: web::Path<(LobbyId,)>) -> impl Responder {
@@ -61,17 +59,29 @@ pub async fn handle_options() -> impl Responder {
         .finish()
 }
 
-#[post("/upload")]
+#[post("/upload/{lobby_id}/{room_id}")]
 pub async fn upload_img(
-    payload: Json<UploadRequest>,
+    info: web::Path<(LobbyId, RoomId)>,
+    form: MultipartForm<UploadRequest>,
     notify: Data<Addr<NotifyServer>>,
 ) -> impl Responder {
-    let request = payload.0;
-    let lobby_id = request.lobby_id;
-    let room_id = request.room_id;
+    // reject malformed requests
+    match form.image.size {
+        0 => return HttpResponse::BadRequest().body("Empty image"),
+        length if length > MAX_FILE_SIZE => {
+            return HttpResponse::BadRequest().body(format!(
+                "The uploaded file is too large. Maximum size is {} bytes.",
+                MAX_FILE_SIZE
+            ));
+        }
+        _ => {}
+    };
+
+    let lobby_id = info.0;
+    let room_id = info.1;
 
     // Read image
-    let img = match base64_to_img(request.image.as_str()) {
+    let img = match read_img(&form.image) {
         Ok(img) => img,
         Err(err_msg) => return HttpResponse::BadRequest().body(err_msg),
     };

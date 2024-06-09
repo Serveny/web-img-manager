@@ -79,8 +79,8 @@ Little project to up and download image files to/from an actix rust server and g
   <tr>
     <td>upload</td>
     <td>POST</td>
-    <td><code>/upload</code></td>
-    <td><code>lobby_id</code>: String<br><code>room_id</code>: String<br><code>image</code>: Image as base64 encoded string</td>
+    <td><code>/upload/{lobby_id}/{room_id}</code></td>
+    <td><code>image</code>: Image as form file</td>
     <td>JSON</td>
     <td>image upload result<br><code>{ img_id: 3 }</code></td>
   </tr>

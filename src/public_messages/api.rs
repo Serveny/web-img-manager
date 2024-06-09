@@ -1,11 +1,11 @@
-use crate::{ImgId, LobbyId, RoomId};
+use crate::{ImgId, LobbyId};
+use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Debug, MultipartForm)]
 pub struct UploadRequest {
-    pub lobby_id: LobbyId,
-    pub room_id: RoomId,
-    pub image: String,
+    #[multipart]
+    pub image: TempFile,
 }
 
 #[derive(Serialize)]

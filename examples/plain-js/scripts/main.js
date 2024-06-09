@@ -22,9 +22,9 @@ notify.onChatMessage((ev) => showChatMessage(ev.username, ev.msg));
 for (const roomId of [...roomSelect.options].map((o) => o.value))
   addRoomImgsToHtml(roomId);
 
-async function addRoomImgsToHtml(roomId) {
-  const img_ids = await web_img_manager.get_room_img_list(lobby_id, roomId);
-  for (const img_id of img_ids) addImgs(roomId, img_id);
+async function addRoomImgsToHtml(room_id) {
+  const img_ids = await web_img_manager.get_room_img_list(lobby_id, room_id);
+  for (const img_id of img_ids) addImgs(room_id, img_id);
 }
 
 function getOrInsertRoomEl(room_id) {
@@ -51,24 +51,28 @@ function addImgs(room_id, img_id) {
   const roomEl = getOrInsertRoomEl(room_id);
   if (roomEl.querySelectorAll(`img[data-img-id='${img_id}']`).length > 0)
     return;
+
+  // Add thumb image
   addImg(room_id, img_id, roomEl, true);
-  // addImg(room_id, img_id, roomEl, false);
+
+  // Add big image
+  //addImg(room_id, img_id, roomEl, false);
 }
 
-function addImg(roomId, imgId, roomEl, isThumb) {
+function addImg(room_id, img_id, roomEl, isThumb) {
   const imgEl = document.createElement('img');
   imgEl.src = `http://${server_addr}/img/${
     isThumb ? 'thumb/' : ''
-  }${lobby_id}/${roomId}/${imgId}`;
-  imgEl.setAttribute('data-img-id', imgId);
+  }${lobby_id}/${room_id}/${img_id}`;
+  imgEl.setAttribute('data-img-id', img_id);
   imgEl.style = 'max-width: 100%';
   roomEl.append(imgEl);
   roomEl.append(imgEl);
 }
 
-function removeImgs(roomId, imgId) {
-  getRoomElById(roomId)
-    .querySelectorAll(`img[data-img-id='${imgId}']`)
+function removeImgs(room_id, img_id) {
+  getRoomElById(room_id)
+    .querySelectorAll(`img[data-img-id='${img_id}']`)
     .forEach((imgEl) => imgEl.parentNode.removeChild(imgEl));
 }
 
@@ -82,11 +86,12 @@ async function readFile(file) {
 
 async function uploadImage() {
   const imageInput = document.getElementById('imageInput');
-  const roomId = roomSelect.value;
-  const file = await readFile(imageInput.files[0]);
+  const room_id = roomSelect.value;
+  const file = imageInput.files[0];
   if (file == null) return;
-  const { img_id } = await web_img_manager.upload_img(lobby_id, roomId, file);
-  addImgs(roomId, img_id);
+  const { img_id } = await web_img_manager.upload_img(lobby_id, room_id, file);
+
+  if (web_img_manager.notifications == null) addImgs(room_id, img_id);
 }
 
 async function deleteFirstImage() {
@@ -97,12 +102,12 @@ async function deleteFirstImage() {
   web_img_manager.delete(lobby_id, roomId, firstImage);
 }
 
-function getRoomElById(roomId) {
-  return document.querySelector(`div[data-room-id='${roomId}']`);
+function getRoomElById(room_id) {
+  return document.querySelector(`div[data-room-id='${room_id}']`);
 }
 
-function emtpyRoom(roomId) {
-  getRoomElById(roomId).replaceChildren();
+function emtpyRoom(room_id) {
+  getRoomElById(room_id).replaceChildren();
 }
 
 function emtpyLobby() {
