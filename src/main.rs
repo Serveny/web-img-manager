@@ -68,7 +68,6 @@ async fn main() -> std::io::Result<()> {
             .service(delete_img)
             .service(send_chat_message)
     })
-    .workers(1)
     .bind(SERVER)?
     .run();
 
