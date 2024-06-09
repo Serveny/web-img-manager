@@ -11,7 +11,7 @@ use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
     get_room_list, handle_options, send_chat_message, upload_img,
 };
-use config::SERVER;
+use config::{read_server_config, ServerConfig};
 use notification::server::NotifyServer;
 use uuid::Uuid;
 
@@ -29,18 +29,23 @@ pub type ImgId = u32;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
+    let server_cfg: ServerConfig = read_server_config().unwrap_or_else(|err| {
+        println!("{err}. Using default config instead");
+        ServerConfig::default()
+    });
+    let server = (server_cfg.url.clone(), server_cfg.port);
 
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
 
-    // json configuration
-    let json_cfg = JsonConfig::default()
-        .limit(10 * 1024 * 1024) // limit request payload size to 10MB
-        .error_handler(|err, _| {
-            InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
-        });
-
     let res = HttpServer::new(move || {
+        // json configuration
+        let json_cfg = JsonConfig::default()
+            .limit(10 * 1024 * 1024) // limit request payload size to 10MB
+            .error_handler(|err, _| {
+                InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
+            });
+
         // Create app
         App::new()
             // -------------
@@ -48,7 +53,8 @@ async fn main() -> std::io::Result<()> {
             // -------------
             .wrap(Logger::default())
             .wrap(cors_cfg())
-            .app_data(json_cfg.clone())
+            .app_data(json_cfg)
+            .app_data(Data::new(server_cfg.clone()))
             // -------------
             // Notifications
             // -------------
@@ -68,10 +74,10 @@ async fn main() -> std::io::Result<()> {
             .service(delete_img)
             .service(send_chat_message)
     })
-    .bind(SERVER)?
+    .bind(&server)?
     .run();
 
-    println!("Server listening to {}:{}", SERVER.0, SERVER.1);
+    println!("Server listening to {}:{}", server.0, server.1);
     res.await
 }
 

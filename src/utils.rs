@@ -1,4 +1,4 @@
-use crate::{config::IMG_STORAGE_PATH, ImgId, LobbyId, RoomId};
+use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
 use actix_web::{
     http::header,
@@ -22,12 +22,16 @@ pub trait ToOutputJsonString {
     fn to_output_json_string(&self) -> Result<String, serde_json::Error>;
 }
 
-pub fn get_img(img_type: ImgType, info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
+pub fn get_img(
+    img_type: ImgType,
+    info: web::Path<(LobbyId, RoomId, ImgId)>,
+    img_storage_path: &str,
+) -> impl Responder {
     let lobby_id = info.0.to_string();
     let room_id = info.1.to_string();
     let filename = format!("{}.jpg", info.2);
 
-    let mut file_path = Path::new(IMG_STORAGE_PATH).join(lobby_id).join(room_id);
+    let mut file_path = Path::new(img_storage_path).join(lobby_id).join(room_id);
     if img_type == ImgType::Thumb {
         file_path = file_path.join("thumb");
     }
@@ -81,9 +85,10 @@ pub fn save_img(
     thumb_img: DynamicImage,
     lobby_id: &Uuid,
     room_id: &Uuid,
+    img_storage_path: &str,
 ) -> Result<u32, String> {
     // Check storage path
-    let storage_path = Path::new(IMG_STORAGE_PATH);
+    let storage_path = Path::new(img_storage_path);
     if !storage_path.exists() {
         return Err(String::from("Storage not found"));
     }

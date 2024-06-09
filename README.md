@@ -147,3 +147,33 @@ Little project to up and download image files to/from an actix rust server and g
     <td><code>event</code>: "ChatMessage", <code>username</code>, <code>msg</code></td>
   </tr>
 </table>
+
+### Server configuration
+
+<table>
+  <tr>
+    <th>Property</th>
+    <th>Description</th>
+    <th>Default Value</th>
+  </tr>
+  <tr>
+    <td><code>url</code></td>
+    <td>Server url</td>
+    <td><code>127.0.0.1</code></td>
+  </tr>
+  <tr>
+    <td><code>port</code></td>
+    <td>Server port</td>
+    <td><code>8080</code></td>
+  </tr>
+  <tr>
+    <td><code>images_storage_path</code></td>
+    <td>Path for storing all uploaded images</td>
+    <td><code>./img-storage</code></td>
+  </tr>
+  <tr>
+    <td><code>max_image_size_byte</code></td>
+    <td>maximum input image file size in bytes</td>
+    <td><code>20971520</code></td>
+  </tr>
+</table>

@@ -1,0 +1,7 @@
+{
+  "url": "127.0.0.1",
+  "port": 8080,
+  "images_storage_path": "./img-test-storage",
+  "admin_pw": "1234",
+  "max_image_size_byte": 20971520
+}

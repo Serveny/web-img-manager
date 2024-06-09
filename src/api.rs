@@ -1,5 +1,5 @@
 use crate::{
-    config::{IMG_STORAGE_PATH, MAX_FILE_SIZE},
+    config::ServerConfig,
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
@@ -24,32 +24,46 @@ use log::warn;
 use std::{fs, path::Path};
 
 #[get("/list/{lobby_id}")]
-pub async fn get_room_list(info: web::Path<(LobbyId,)>) -> impl Responder {
+pub async fn get_room_list(
+    info: web::Path<(LobbyId,)>,
+    server_cfg: Data<ServerConfig>,
+) -> impl Responder {
     let lobby_id = info.0.to_string();
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(lobby_id);
+    let folder_path = Path::new(&server_cfg.images_storage_path).join(lobby_id);
     let filenames = get_foldernames_as_uuid(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
 
 #[get("/list/{lobby_id}/{room_id}")]
-pub async fn get_room_img_list(info: web::Path<(LobbyId, RoomId)>) -> impl Responder {
+pub async fn get_room_img_list(
+    info: web::Path<(LobbyId, RoomId)>,
+    server_cfg: Data<ServerConfig>,
+) -> impl Responder {
     let lobby_id = info.0.to_string();
     let room_id = info.1.to_string();
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(lobby_id).join(room_id);
+    let folder_path = Path::new(&server_cfg.images_storage_path)
+        .join(lobby_id)
+        .join(room_id);
     let filenames = get_filenames_as_u32(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
 
 #[get("/img/thumb/{lobby_id}/{room_id}/{img_id}")]
-pub async fn get_img_thumb(info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
-    get_img(ImgType::Thumb, info)
+pub async fn get_img_thumb(
+    info: web::Path<(LobbyId, RoomId, ImgId)>,
+    server_cfg: Data<ServerConfig>,
+) -> impl Responder {
+    get_img(ImgType::Thumb, info, &server_cfg.images_storage_path)
 }
 
 #[get("/img/{lobby_id}/{room_id}/{img_id}")]
-pub async fn get_img_big(info: web::Path<(LobbyId, RoomId, ImgId)>) -> impl Responder {
-    get_img(ImgType::Big, info)
+pub async fn get_img_big(
+    info: web::Path<(LobbyId, RoomId, ImgId)>,
+    server_cfg: Data<ServerConfig>,
+) -> impl Responder {
+    get_img(ImgType::Big, info, &server_cfg.images_storage_path)
 }
 
 #[options("/{tail:.*}")]
@@ -64,14 +78,15 @@ pub async fn upload_img(
     info: web::Path<(LobbyId, RoomId)>,
     form: MultipartForm<UploadRequest>,
     notify: Data<Addr<NotifyServer>>,
+    server_cfg: Data<ServerConfig>,
 ) -> impl Responder {
     // reject malformed requests
     match form.image.size {
         0 => return HttpResponse::BadRequest().body("Empty image"),
-        length if length > MAX_FILE_SIZE => {
+        length if length > server_cfg.max_image_size_byte => {
             return HttpResponse::BadRequest().body(format!(
                 "The uploaded file is too large. Maximum size is {} bytes.",
-                MAX_FILE_SIZE
+                server_cfg.max_image_size_byte
             ));
         }
         _ => {}
@@ -91,7 +106,13 @@ pub async fn upload_img(
     let thumb_img = resize_image(img.clone(), 600, 200);
 
     // Save images
-    let img_id = match save_img(img, thumb_img, &lobby_id, &room_id) {
+    let img_id = match save_img(
+        img,
+        thumb_img,
+        &lobby_id,
+        &room_id,
+        &server_cfg.images_storage_path,
+    ) {
         Ok(id) => id,
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
@@ -112,8 +133,9 @@ pub async fn upload_img(
 pub async fn delete_lobby(
     path: web::Path<(LobbyId,)>,
     notify: Data<Addr<NotifyServer>>,
+    server_cfg: Data<ServerConfig>,
 ) -> impl Responder {
-    let folder_path = Path::new(IMG_STORAGE_PATH).join(path.0.to_string());
+    let folder_path = Path::new(&server_cfg.images_storage_path).join(path.0.to_string());
 
     // Delete room folder
     if fs::remove_dir_all(&folder_path).is_err() {
@@ -134,8 +156,9 @@ pub async fn delete_lobby(
 pub async fn delete_room(
     path: web::Path<(LobbyId, RoomId)>,
     notify: Data<Addr<NotifyServer>>,
+    server_cfg: Data<ServerConfig>,
 ) -> impl Responder {
-    let folder_path = Path::new(IMG_STORAGE_PATH)
+    let folder_path = Path::new(&server_cfg.images_storage_path)
         .join(path.0.to_string())
         .join(path.1.to_string());
 
@@ -158,8 +181,9 @@ pub async fn delete_room(
 pub async fn delete_img(
     path: web::Path<(LobbyId, RoomId, ImgId)>,
     notify: Data<Addr<NotifyServer>>,
+    server_cfg: Data<ServerConfig>,
 ) -> impl Responder {
-    let room_path = Path::new(IMG_STORAGE_PATH)
+    let room_path = Path::new(&server_cfg.images_storage_path)
         .join(path.0.to_string())
         .join(path.1.to_string());
     let filename = img_id_to_filename(path.2);
