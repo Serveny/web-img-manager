@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
             InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
         });
 
-    HttpServer::new(move || {
+    let res = HttpServer::new(move || {
         // Create app
         App::new()
             // -------------
@@ -68,9 +68,12 @@ async fn main() -> std::io::Result<()> {
             .service(delete_img)
             .service(send_chat_message)
     })
+    .workers(1)
     .bind(SERVER)?
-    .run()
-    .await
+    .run();
+
+    println!("Server listening to {}:{}", SERVER.0, SERVER.1);
+    res.await
 }
 
 fn cors_cfg() -> Cors {
