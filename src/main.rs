@@ -18,6 +18,7 @@ use uuid::Uuid;
 mod api;
 mod config;
 mod notification;
+mod permission;
 mod public_messages;
 mod utils;
 

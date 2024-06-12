@@ -18,7 +18,7 @@ use actix_web::{
     http::header,
     options, post,
     web::{self, Data, Json},
-    HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder,
 };
 use log::warn;
 use std::{fs, path::Path};
@@ -79,7 +79,16 @@ pub async fn upload_img(
     form: MultipartForm<UploadRequest>,
     notify: Data<Addr<NotifyServer>>,
     server_cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
+    let lobby_id = info.0;
+    let room_id = info.1;
+
+    // check permission
+    if let Err(msg) = server_cfg.upload.is_allowed(&req, lobby_id, room_id).await {
+        return HttpResponse::Forbidden().body(msg);
+    }
+
     // reject malformed requests
     match form.image.size {
         0 => return HttpResponse::BadRequest().body("Empty image"),
@@ -91,9 +100,6 @@ pub async fn upload_img(
         }
         _ => {}
     };
-
-    let lobby_id = info.0;
-    let room_id = info.1;
 
     // Read image
     let img = match read_img(&form.image) {

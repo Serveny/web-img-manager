@@ -1,0 +1,23 @@
+{
+  "url": "127.0.0.1",
+  "port": 8080,
+  "images_storage_path": "./img-test-storage",
+  "admin_pw": "1234",
+  "max_image_size_byte": 20971520,
+  "download": {
+    "url_whitelist": null,
+    "restriction": {
+      "NeedsConfirmation": {
+        "url": "127.0.0.1",
+        "params": {
+          "lobby_id": "lobbyId",
+          "room_id": null,
+          "customParam": "custom parameter which is sent along"
+        }
+      }
+    }
+  },
+  "upload": {
+    "restriction": "AllowedToAll"
+  }
+}

@@ -1,3 +1,4 @@
+use crate::permission::Permission;
 use serde::Deserialize;
 use std::fs;
 
@@ -17,6 +18,9 @@ pub struct ServerConfig {
 
     // maximum input image file size
     pub max_image_size_byte: usize,
+
+    // upload permission
+    pub upload: Permission,
 }
 
 impl Default for ServerConfig {
@@ -27,12 +31,15 @@ impl Default for ServerConfig {
             images_storage_path: String::from("./img-storage"),
             admin_pw: String::from("1234"),
             max_image_size_byte: 1024 * 1024 * 20, // 20 MB
+            upload: Permission::default(),
         }
     }
 }
 
 pub fn read_server_config() -> Result<ServerConfig, &'static str> {
-    let Ok(cfg_file) = fs::read_to_string("./config/server-config.json") else {
+    let Ok(cfg_file) = fs::read_to_string("./config/server-config.json")
+        .or(fs::read_to_string("./config/default-server-config.json"))
+    else {
         return Err("Can't read config file");
     };
     let Ok(cfg) = serde_json::from_str(&cfg_file) else {

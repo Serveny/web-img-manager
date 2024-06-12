@@ -26,12 +26,20 @@ Little project to up and download image files to/from an actix rust server and g
 
 ## API
 
-#### Parameters
+#### Types
 
 - `lobby_id`: Uuid v4
 - `room_id`: Uuid v4
 - `session_id`: Uuid v4
 - `img_id`: 32 bit Integer
+- `Permission`: Object
+  - `url_whitelist`: Restrict access to urls. If None, every url is allowed
+  - `restriction`: Rescriction enum
+- `Restriction`: Choose one option <ul>
+  <li><code>AllowedToAll</code>: Allow access from anywhere by anyone</li>
+  <li><code>NeedsConfimation</code>: Allow access after sending serverside confirmation request</li>
+  <li><code>Denied</code>: Deny access</li>
+</ul>
 
 #### Public requests
 
@@ -175,5 +183,10 @@ Little project to up and download image files to/from an actix rust server and g
     <td><code>max_image_size_byte</code></td>
     <td>maximum input image file size in bytes</td>
     <td><code>20971520</code></td>
+  </tr>
+  <tr>
+    <td><code>upload</code></td>
+    <td>Permission for image upload</td>
+    <td><code>{ "restriction": "AllowedToAll" }</code></td>
   </tr>
 </table>
