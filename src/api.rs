@@ -4,6 +4,7 @@ use crate::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
     },
+    permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
         get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
@@ -26,10 +27,17 @@ use std::{fs, path::Path};
 #[get("/list/{lobby_id}")]
 pub async fn get_room_list(
     info: web::Path<(LobbyId,)>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
     let lobby_id = info.0.to_string();
-    let folder_path = Path::new(&server_cfg.images_storage_path).join(lobby_id);
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.get_room_list, &req, &info.into_inner()).await {
+        return err;
+    }
+
+    let folder_path = Path::new(&cfg.images_storage_path).join(lobby_id);
     let filenames = get_foldernames_as_uuid(&folder_path);
 
     HttpResponse::Ok().json(filenames)
@@ -38,11 +46,18 @@ pub async fn get_room_list(
 #[get("/list/{lobby_id}/{room_id}")]
 pub async fn get_room_img_list(
     info: web::Path<(LobbyId, RoomId)>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
     let lobby_id = info.0.to_string();
     let room_id = info.1.to_string();
-    let folder_path = Path::new(&server_cfg.images_storage_path)
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.get_room_img_list, &req, &info.into_inner()).await {
+        return err;
+    }
+
+    let folder_path = Path::new(&cfg.images_storage_path)
         .join(lobby_id)
         .join(room_id);
     let filenames = get_filenames_as_u32(&folder_path);
@@ -53,17 +68,32 @@ pub async fn get_room_img_list(
 #[get("/img/thumb/{lobby_id}/{room_id}/{img_id}")]
 pub async fn get_img_thumb(
     info: web::Path<(LobbyId, RoomId, ImgId)>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
-    get_img(ImgType::Thumb, info, &server_cfg.images_storage_path)
+    let params = info.into_inner();
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.get_img_thumb, &req, &params).await {
+        return err;
+    }
+    get_img(ImgType::Thumb, &params, &cfg.images_storage_path)
 }
 
 #[get("/img/{lobby_id}/{room_id}/{img_id}")]
 pub async fn get_img_big(
     info: web::Path<(LobbyId, RoomId, ImgId)>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
-    get_img(ImgType::Big, info, &server_cfg.images_storage_path)
+    let params = info.into_inner();
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.get_img_big, &req, &params).await {
+        return err;
+    }
+
+    get_img(ImgType::Big, &params, &cfg.images_storage_path)
 }
 
 #[options("/{tail:.*}")]
@@ -78,24 +108,24 @@ pub async fn upload_img(
     info: web::Path<(LobbyId, RoomId)>,
     form: MultipartForm<UploadRequest>,
     notify: Data<Addr<NotifyServer>>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
     req: HttpRequest,
 ) -> impl Responder {
     let lobby_id = info.0;
     let room_id = info.1;
 
     // check permission
-    if let Err(msg) = server_cfg.upload.is_allowed(&req, lobby_id, room_id).await {
-        return HttpResponse::Forbidden().body(msg);
+    if let Some(err) = check(&cfg.permissions.upload_img, &req, &info.into_inner()).await {
+        return err;
     }
 
     // reject malformed requests
     match form.image.size {
         0 => return HttpResponse::BadRequest().body("Empty image"),
-        length if length > server_cfg.max_image_size_byte => {
+        length if length > cfg.max_image_size_byte => {
             return HttpResponse::BadRequest().body(format!(
                 "The uploaded file is too large. Maximum size is {} bytes.",
-                server_cfg.max_image_size_byte
+                cfg.max_image_size_byte
             ));
         }
         _ => {}
@@ -117,7 +147,7 @@ pub async fn upload_img(
         thumb_img,
         &lobby_id,
         &room_id,
-        &server_cfg.images_storage_path,
+        &cfg.images_storage_path,
     ) {
         Ok(id) => id,
         Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
@@ -139,9 +169,17 @@ pub async fn upload_img(
 pub async fn delete_lobby(
     path: web::Path<(LobbyId,)>,
     notify: Data<Addr<NotifyServer>>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
-    let folder_path = Path::new(&server_cfg.images_storage_path).join(path.0.to_string());
+    let lobby_id = path.0;
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.delete_lobby, &req, &path.into_inner()).await {
+        return err;
+    }
+
+    let folder_path = Path::new(&cfg.images_storage_path).join(lobby_id.to_string());
 
     // Delete room folder
     if fs::remove_dir_all(&folder_path).is_err() {
@@ -151,7 +189,7 @@ pub async fn delete_lobby(
 
     // Notify users
     notify
-        .send(LobbyDeleted::new(path.0))
+        .send(LobbyDeleted::new(lobby_id))
         .await
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
@@ -162,11 +200,20 @@ pub async fn delete_lobby(
 pub async fn delete_room(
     path: web::Path<(LobbyId, RoomId)>,
     notify: Data<Addr<NotifyServer>>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
-    let folder_path = Path::new(&server_cfg.images_storage_path)
-        .join(path.0.to_string())
-        .join(path.1.to_string());
+    let lobby_id = path.0;
+    let room_id = path.1;
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.delete_room, &req, &path.into_inner()).await {
+        return err;
+    }
+
+    let folder_path = Path::new(&cfg.images_storage_path)
+        .join(lobby_id.to_string())
+        .join(room_id.to_string());
 
     // Delete room folder
     if fs::remove_dir_all(&folder_path).is_err() {
@@ -176,7 +223,7 @@ pub async fn delete_room(
 
     // Notify users
     notify
-        .send(RoomDeleted::new(path.0, path.1))
+        .send(RoomDeleted::new(lobby_id, room_id))
         .await
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
@@ -187,12 +234,22 @@ pub async fn delete_room(
 pub async fn delete_img(
     path: web::Path<(LobbyId, RoomId, ImgId)>,
     notify: Data<Addr<NotifyServer>>,
-    server_cfg: Data<ServerConfig>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
-    let room_path = Path::new(&server_cfg.images_storage_path)
-        .join(path.0.to_string())
-        .join(path.1.to_string());
-    let filename = img_id_to_filename(path.2);
+    let lobby_id = path.0;
+    let room_id = path.1;
+    let img_id = path.2;
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.delete_img, &req, &path.into_inner()).await {
+        return err;
+    }
+
+    let room_path = Path::new(&cfg.images_storage_path)
+        .join(lobby_id.to_string())
+        .join(room_id.to_string());
+    let filename = img_id_to_filename(img_id);
 
     // Delete big image
     let img_path = room_path.join(&filename);
@@ -204,7 +261,7 @@ pub async fn delete_img(
 
     // Notify users
     notify
-        .send(ImageDeleted::new(path.0, path.1, path.2))
+        .send(ImageDeleted::new(lobby_id, room_id, img_id))
         .await
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
@@ -215,10 +272,17 @@ pub async fn delete_img(
 pub async fn send_chat_message(
     payload: Json<ChatMessageRequest>,
     notify: Data<Addr<NotifyServer>>,
+    cfg: Data<ServerConfig>,
+    req: HttpRequest,
 ) -> impl Responder {
     let request = payload.0;
     let lobby_id = request.lobby_id;
     let msg = request.msg;
+
+    // check permission
+    if let Some(err) = check(&cfg.permissions.send_chat_message, &req, &(lobby_id,)).await {
+        return err;
+    }
 
     // Notify users
     notify

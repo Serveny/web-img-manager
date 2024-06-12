@@ -4,20 +4,33 @@
   "images_storage_path": "./img-test-storage",
   "admin_pw": "1234",
   "max_image_size_byte": 20971520,
-  "download": {
-    "url_whitelist": null,
-    "restriction": {
-      "NeedsConfirmation": {
-        "url": "127.0.0.1",
-        "params": {
-          "lobby_id": "lobbyId",
-          "room_id": null,
-          "customParam": "custom parameter which is sent along"
-        }
-      }
+  "permissions": {
+    "get_room_list": {
+      "restriction": "AllowedToAll"
+    },
+    "get_room_img_list": {
+      "restriction": "AllowedToAll"
+    },
+    "get_img_thumb": {
+      "restriction": "AllowedToAll"
+    },
+    "get_img_big": {
+      "restriction": "AllowedToAll"
+    },
+    "upload_img": {
+      "restriction": "AllowedToAll"
+    },
+    "delete_lobby": {
+      "restriction": "AllowedToAll"
+    },
+    "delete_room": {
+      "restriction": "AllowedToAll"
+    },
+    "delete_img": {
+      "restriction": "AllowedToAll"
+    },
+    "send_chat_message": {
+      "restriction": "AllowedToAll"
     }
-  },
-  "upload": {
-    "restriction": "AllowedToAll"
   }
 }

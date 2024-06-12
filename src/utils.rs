@@ -1,12 +1,10 @@
 use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
-use actix_web::{
-    http::header,
-    web::{self},
-    HttpResponse, Responder,
-};
+use actix_web::{http::header, HttpResponse};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
+use serde_json::{from_value, Value};
 use std::{
+    collections::HashMap,
     fs::{self, create_dir_all, DirEntry, File},
     io::{BufReader, Error, Read},
     path::{Path, PathBuf},
@@ -24,12 +22,12 @@ pub trait ToOutputJsonString {
 
 pub fn get_img(
     img_type: ImgType,
-    info: web::Path<(LobbyId, RoomId, ImgId)>,
+    params: &(LobbyId, RoomId, ImgId),
     img_storage_path: &str,
-) -> impl Responder {
-    let lobby_id = info.0.to_string();
-    let room_id = info.1.to_string();
-    let filename = format!("{}.jpg", info.2);
+) -> HttpResponse {
+    let lobby_id = params.0.to_string();
+    let room_id = params.1.to_string();
+    let filename = format!("{}.jpg", params.2);
 
     let mut file_path = Path::new(img_storage_path).join(lobby_id).join(room_id);
     if img_type == ImgType::Thumb {
@@ -163,4 +161,39 @@ pub fn get_foldernames_as_uuid(folder_path: &PathBuf) -> Vec<RoomId> {
 
 pub fn img_id_to_filename(img_id: ImgId) -> String {
     format!("{}.jpg", img_id)
+}
+
+pub fn rename_with_value(map: &mut HashMap<String, Value>, key: &str, val: String) {
+    if let Some(new_key) = map.get_mut(key) {
+        if let Ok(new_key) = from_value::<String>(new_key.clone()) {
+            map.insert(new_key, Value::String(val));
+        } else {
+            *new_key = Value::String(val);
+        }
+    }
+}
+
+pub trait ParamTuple {
+    fn edit_param_map(&self, map: &mut HashMap<String, Value>);
+}
+
+impl ParamTuple for (LobbyId,) {
+    fn edit_param_map(&self, map: &mut HashMap<String, Value>) {
+        rename_with_value(map, "lobby_id", self.0.to_string());
+    }
+}
+
+impl ParamTuple for (LobbyId, RoomId) {
+    fn edit_param_map(&self, map: &mut HashMap<String, Value>) {
+        rename_with_value(map, "lobby_id", self.0.to_string());
+        rename_with_value(map, "room_id", self.1.to_string());
+    }
+}
+
+impl ParamTuple for (LobbyId, RoomId, ImgId) {
+    fn edit_param_map(&self, map: &mut HashMap<String, Value>) {
+        rename_with_value(map, "lobby_id", self.0.to_string());
+        rename_with_value(map, "room_id", self.1.to_string());
+        rename_with_value(map, "img_id", self.2.to_string());
+    }
 }

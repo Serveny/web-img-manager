@@ -1,9 +1,22 @@
-use crate::{LobbyId, RoomId};
-use actix_web::HttpRequest;
+use crate::{utils::ParamTuple, LobbyId, RoomId};
+use actix_web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_value, Value};
+use serde_json::Value;
 use std::collections::HashMap;
 use Restriction::*;
+
+#[derive(Deserialize, Clone, Default)]
+pub struct Permissions {
+    pub get_room_list: Permission,
+    pub get_room_img_list: Permission,
+    pub get_img_thumb: Permission,
+    pub get_img_big: Permission,
+    pub upload_img: Permission,
+    pub delete_lobby: Permission,
+    pub delete_room: Permission,
+    pub delete_img: Permission,
+    pub send_chat_message: Permission,
+}
 
 #[derive(Deserialize, Clone)]
 pub struct Permission {
@@ -12,19 +25,17 @@ pub struct Permission {
 }
 
 impl Permission {
-    pub async fn is_allowed(
+    pub async fn is_allowed<T: ParamTuple>(
         &self,
         req: &HttpRequest,
-        lobby_id: LobbyId,
-        room_id: RoomId,
+        params: &T,
     ) -> Result<(), String> {
         self.is_allowed_url(req).and(match &self.restriction {
             AllowedToAll => return Ok(()),
             NeedsConfirmation(confirm_req) => {
-                let mut params = confirm_req.params.clone();
-                rename_with_value(&mut params, "lobby_id", lobby_id.to_string());
-                rename_with_value(&mut params, "room_id", room_id.to_string());
-                confirm_req.is_allowed(&params).await
+                let mut conf_params = confirm_req.params.clone();
+                params.edit_param_map(&mut conf_params);
+                confirm_req.is_allowed(&conf_params).await
             }
             Denied => Err(self.restriction.to_string()),
         })
@@ -109,12 +120,13 @@ pub struct UploadConfirmationRequest {
     room_id: RoomId,
 }
 
-fn rename_with_value(map: &mut HashMap<String, Value>, key: &str, val: String) {
-    if let Some(new_key) = map.get_mut(key) {
-        if let Ok(new_key) = from_value::<String>(new_key.clone()) {
-            map.insert(new_key, Value::String(val));
-        } else {
-            *new_key = Value::String(val);
-        }
+pub async fn check<T: ParamTuple>(
+    permission: &Permission,
+    req: &HttpRequest,
+    params: &T,
+) -> Option<HttpResponse> {
+    if let Err(msg) = permission.is_allowed(&req, params).await {
+        return Some(HttpResponse::Forbidden().body(msg));
     }
+    None
 }

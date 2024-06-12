@@ -1,4 +1,4 @@
-use crate::permission::Permission;
+use crate::permission::Permissions;
 use serde::Deserialize;
 use std::fs;
 
@@ -20,7 +20,7 @@ pub struct ServerConfig {
     pub max_image_size_byte: usize,
 
     // upload permission
-    pub upload: Permission,
+    pub permissions: Permissions,
 }
 
 impl Default for ServerConfig {
@@ -31,7 +31,7 @@ impl Default for ServerConfig {
             images_storage_path: String::from("./img-storage"),
             admin_pw: String::from("1234"),
             max_image_size_byte: 1024 * 1024 * 20, // 20 MB
-            upload: Permission::default(),
+            permissions: Permissions::default(),
         }
     }
 }
