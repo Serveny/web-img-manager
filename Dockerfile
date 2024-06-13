@@ -26,7 +26,7 @@ COPY src /web-img-manager/src
 RUN cargo build --release
 
 # The final base image
-FROM debian:bookworm
+FROM alpine
 
 # Expose ports
 EXPOSE 8080
