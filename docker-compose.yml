@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  webimgmanager:
+    image: web-img-manager
+    build:
+      context: .
+      dockerfile: ./Dockerfile

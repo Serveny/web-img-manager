@@ -1,8 +1,17 @@
-workspace = { members = ["admin-control-panel"] }
+workspace = { members = [ 
+  ".", 
+  # "admin-control-panel" 
+] }
+
 [package]
 name = "web-img-manager"
 version = "0.1.0"
 edition = "2021"
+authors = ["Serveny"]
+
+[[bin]]
+name = "web-img-manager"
+path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
