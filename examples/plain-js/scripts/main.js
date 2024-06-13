@@ -87,11 +87,12 @@ async function readFile(file) {
 async function uploadImage() {
   const imageInput = document.getElementById('imageInput');
   const room_id = roomSelect.value;
-  const file = imageInput.files[0];
-  if (file == null) return;
-  const { img_id } = await web_img_manager.upload_img(lobby_id, room_id, file);
-
-  if (web_img_manager.notifications == null) addImgs(room_id, img_id);
+  for (const file of imageInput.files) {
+    if (file == null) continue;
+    web_img_manager.upload_img(lobby_id, room_id, file).then(({ img_id }) => {
+      if (web_img_manager.notifications == null) addImgs(room_id, img_id);
+    });
+  }
 }
 
 async function deleteFirstImage() {
