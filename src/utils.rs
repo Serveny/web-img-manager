@@ -9,7 +9,6 @@ use std::{
     io::{BufReader, Error, Read},
     path::{Path, PathBuf},
 };
-use uuid::Uuid;
 
 #[derive(PartialEq, Eq)]
 pub enum ImgType {
@@ -81,8 +80,8 @@ pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> Dynam
 pub fn save_img(
     img: DynamicImage,
     thumb_img: DynamicImage,
-    lobby_id: &Uuid,
-    room_id: &Uuid,
+    lobby_id: &LobbyId,
+    room_id: &RoomId,
     img_storage_path: &str,
 ) -> Result<u32, String> {
     // Check storage path
@@ -147,15 +146,15 @@ pub fn get_filenames_as_u32(folder_path: &PathBuf) -> Vec<ImgId> {
 }
 
 pub fn get_foldernames_as_uuid(folder_path: &PathBuf) -> Vec<RoomId> {
-    let entry_to_uuid = |entry: Result<DirEntry, Error>| {
+    let entry_to_room_id = |entry: Result<DirEntry, Error>| {
         entry.ok().and_then(|e| match e.path().is_dir() {
-            true => e.file_name().to_string_lossy().parse::<Uuid>().ok(),
+            true => e.file_name().to_string_lossy().parse::<RoomId>().ok(),
             false => None,
         })
     };
     fs::read_dir(folder_path)
         .ok()
-        .map(|entries| entries.filter_map(entry_to_uuid).collect())
+        .map(|entries| entries.filter_map(entry_to_room_id).collect())
         .unwrap_or_else(Vec::new)
 }
 

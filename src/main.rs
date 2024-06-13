@@ -23,7 +23,7 @@ mod public_messages;
 mod utils;
 
 pub type LobbyId = Uuid;
-pub type RoomId = Uuid;
+pub type RoomId = u32;
 pub type SessionId = Uuid;
 pub type ImgId = u32;
 
