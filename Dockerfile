@@ -2,7 +2,7 @@
 FROM rust:1.78 as build
 
 # Create a new empty shell project
-# RUN USER=root cargo new --bin web-img-manager 
+RUN USER=root cargo new --bin web-img-manager 
 WORKDIR /web-img-manager
 
 # Copy our manifests
@@ -13,15 +13,15 @@ COPY ./Cargo.toml ./Cargo.toml
 # COPY ./admin-control-panel/Cargo.toml ./admin-control-panel/Cargo.toml
 
 # Build only the dependencies to cache them
-RUN cargo build --release
+# RUN cargo build --release
 RUN rm src/*.rs
 
 # Copy the source code
-COPY src ./src
+COPY src /web-img-manager/src
 #COPY ./admin-control-panel/src ./admin-control-panel/src
 
 # Build for release.
-RUN rm ./target/release/deps/web-img-manager*
+# RUN rm ./target/release/deps/web-img-manager*
 # RUN cargo fetch --path .
 RUN cargo build --release
 
