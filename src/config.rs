@@ -13,9 +13,6 @@ pub struct ServerConfig {
     // Path for storing all uploaded images
     pub images_storage_path: String,
 
-    // password to use admin commands
-    pub admin_pw: String,
-
     // maximum input image file size
     pub max_image_size_byte: usize,
 
@@ -26,24 +23,29 @@ pub struct ServerConfig {
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            url: String::from("127.0.0.1"),
-            port: 8080,
-            images_storage_path: String::from("./img-storage"),
-            admin_pw: String::from("1234"),
+            url: String::from("0.0.0.0"),
+            port: 1870,
+            images_storage_path: String::from("/wim_storage/pictures"),
             max_image_size_byte: 1024 * 1024 * 20, // 20 MB
             permissions: Permissions::default(),
         }
     }
 }
 
-pub fn read_server_config() -> Result<ServerConfig, &'static str> {
-    let Ok(cfg_file) = fs::read_to_string("./config/server-config.json")
-        .or(fs::read_to_string("./config/default-server-config.json"))
-    else {
-        return Err("Can't read config file");
+pub fn read_server_config() -> Result<ServerConfig, String> {
+    let cfg_path = match fs::read_to_string("./config/server-config.json") {
+        Ok(cfg) => cfg,
+        Err(_) => match fs::read_to_string("./config/default-server-config.json") {
+            Ok(default_cfg) => {
+                println!("use default-server-config.json");
+                default_cfg
+            }
+            Err(err) => return Err(format!("Can't read config file: {err}")),
+        },
     };
-    let Ok(cfg) = serde_json::from_str(&cfg_file) else {
-        return Err("Invalid config json");
+    let cfg = match serde_json::from_str(&cfg_path) {
+        Ok(cfg) => cfg,
+        Err(err) => return Err(format!("Invalid config json: {err}")),
     };
     Ok(cfg)
 }

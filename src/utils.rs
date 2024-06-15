@@ -87,7 +87,7 @@ pub fn save_img(
     // Check storage path
     let storage_path = Path::new(img_storage_path);
     if !storage_path.exists() {
-        return Err(String::from("Storage not found"));
+        return Err(format!("Storage not found: {img_storage_path}"));
     }
 
     // Check image folder

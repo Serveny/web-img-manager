@@ -21,7 +21,7 @@ use actix_web::{
     web::{self, Data, Json},
     HttpRequest, HttpResponse, Responder,
 };
-use log::warn;
+use log::{debug, warn};
 use std::{fs, path::Path};
 
 #[get("/list/{lobby_id}")]
@@ -291,4 +291,10 @@ pub async fn send_chat_message(
         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
 
     HttpResponse::Ok().json(Success)
+}
+
+#[get("/")]
+pub async fn test() -> impl Responder {
+    debug!("Test ping");
+    HttpResponse::Ok().body("Hello, world!")
 }

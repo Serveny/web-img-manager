@@ -7,9 +7,9 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - '8080'
+      - '1870:1870'
     volumes:
-      - img_storage:/
+      - wim-storage:/
 
 volumes:
-  img_storage:
+  wim-storage:

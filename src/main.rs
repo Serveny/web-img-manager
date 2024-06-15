@@ -9,7 +9,7 @@ use actix_web::{
 };
 use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
-    get_room_list, handle_options, send_chat_message, upload_img,
+    get_room_list, handle_options, send_chat_message, test, upload_img,
 };
 use config::{read_server_config, ServerConfig};
 use notification::server::NotifyServer;
@@ -31,7 +31,7 @@ pub type ImgId = u32;
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
     let server_cfg: ServerConfig = read_server_config().unwrap_or_else(|err| {
-        println!("{err}. Using default config instead");
+        println!("{err}. Using hardcoded default config instead");
         ServerConfig::default()
     });
     let server = (server_cfg.url.clone(), server_cfg.port);
@@ -74,6 +74,7 @@ async fn main() -> std::io::Result<()> {
             .service(delete_lobby)
             .service(delete_img)
             .service(send_chat_message)
+            .service(test)
     })
     .bind(&server)?
     .run();
