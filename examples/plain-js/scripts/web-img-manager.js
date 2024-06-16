@@ -41,10 +41,12 @@ class WebImgManager {
     const url = `http://${this.server_addr}/upload/${lobby_id}/${room_id}`;
     const formData = new FormData();
     formData.append('image', image);
-    return await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       body: formData,
     });
+    console.log(res.json());
+    return res;
   }
 
   /**
@@ -57,8 +59,8 @@ class WebImgManager {
    */
   async delete(lobbyId, roomId, imgName) {
     let url = `http://${this.server_addr}/delete/${lobbyId}`;
-    if (roomId) url += `/${roomId}`;
-    if (imgName) url += `/${imgName}`;
+    if (roomId != null) url += `/${roomId}`;
+    if (roomId != null && imgName != null) url += `/${imgName}`;
     return send(url, 'POST');
   }
 

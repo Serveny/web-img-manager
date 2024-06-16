@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "Example TypeScript application with bindings for web image manager",
   "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate-bindings": "cargo test && node ./combine-bindings.js && rimraf ./src/bindings/",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "typescript": "^5.4",
+    "vite": "5.3"
   },
   "keywords": [
     "example",

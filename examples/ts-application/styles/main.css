@@ -1,0 +1,39 @@
+body {
+  display: grid;
+  grid-template-columns: auto minmax(200px, 20%);
+  grid-template-rows: 30px auto 30px;
+  margin: 0;
+  height: 100vh;
+}
+
+#control-panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#lobby {
+  grid-column: 1;
+  grid-row: 2 / 4;
+  overflow: scroll;
+}
+
+.room {
+  border: solid 1px aliceblue;
+  background-color: gray;
+  margin: 5px;
+}
+
+#chat-messages {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  background-color: gray;
+  overflow: scroll;
+  border: 1px solid aliceblue;
+}
+
+#chat-box {
+  border: 1px solid aliceblue;
+  grid-column: 2;
+  grid-row: 3;
+  background-color: grey;
+}

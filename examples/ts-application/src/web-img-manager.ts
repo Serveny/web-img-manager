@@ -1,12 +1,20 @@
+import {
+  ChatMessageEvent,
+  ImageProcessedEvent,
+  LobbyDeletedEvent,
+  RoomDeletedEvent,
+  Success,
+  UploadResult,
+} from './rs-bindings';
 /**
  * @fileOverview Bindings for web img manager
  * @author Serveny
  * @version 1.0.0
  */
 
-type LobbyId = string;
-type RoomId = number;
-type ImgId = string;
+export type LobbyId = string;
+export type RoomId = number;
+export type ImgId = number;
 
 /** Class for communication with web img manager server. */
 export class WebImgManager {
@@ -14,44 +22,57 @@ export class WebImgManager {
 
   constructor(public server_addr: string) {}
 
-  async get_room_img_list(lobby_id: LobbyId, room_id: RoomId) {
+  async get_room_img_list(
+    lobby_id: LobbyId,
+    room_id: RoomId
+  ): Promise<ImgId[]> {
     return send(
       `http://${this.server_addr}/list/${lobby_id}/${room_id}`,
       'GET'
     );
   }
 
-  async upload_img(lobby_id: LobbyId, room_id: RoomId, image: File) {
+  async upload_img(
+    lobby_id: LobbyId,
+    room_id: RoomId,
+    image: File
+  ): Promise<UploadResult> {
     const url = `http://${this.server_addr}/upload/${lobby_id}/${room_id}`;
     const formData = new FormData();
     formData.append('image', image);
 
-    return await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       body: formData,
     });
+
+    return res.json();
   }
 
-  async delete(lobby_id: LobbyId, room_id: RoomId, img_id: ImgId) {
+  async delete(
+    lobby_id: LobbyId,
+    room_id?: RoomId,
+    img_id?: ImgId
+  ): Promise<Success> {
     let url = `http://${this.server_addr}/delete/${lobby_id}`;
-    if (room_id) url += `/${room_id}`;
-    if (img_id) url += `/${img_id}`;
+    if (room_id != null) url += `/${room_id}`;
+    if (room_id != null && img_id != null) url += `/${img_id}`;
     return send(url, 'POST');
   }
 
-  async sendChatMessage(lobby_id: LobbyId, msg: string) {
+  async sendChatMessage(lobby_id: LobbyId, msg: string): Promise<Success> {
     let url = `http://${this.server_addr}/chat`;
     return send(url, 'POST', { lobby_id, msg });
   }
 
-  connect(lobby_id: LobbyId) {
+  connect(lobby_id: LobbyId): WebImgManager {
     this.notifications = new Notifications(this.server_addr, lobby_id);
     return this;
   }
 }
 
 /** Class for communication with web img manager web socket server. */
-class Notifications {
+export class Notifications {
   emitter = new EventEmitter();
 
   constructor(server_addr: string, lobby_id: LobbyId) {
@@ -88,28 +109,32 @@ class Notifications {
     this.emitter.on('Error', handler);
   }
 
-  onImageUploaded(handler) {
-    this.emitter.on('ImageUploaded', handler);
+  onImageUploaded(handler: (ev: ImageProcessedEvent) => void) {
+    this.emitter.on('ImageUploaded', handler as any);
   }
 
-  onLobbyDeleted(handler) {
-    this.emitter.on('LobbyDeleted', handler);
+  onLobbyDeleted(handler: (ev: LobbyDeletedEvent) => void) {
+    this.emitter.on('LobbyDeleted', handler as any);
   }
 
-  onRoomDeleted(handler) {
-    this.emitter.on('RoomDeleted', handler);
+  onRoomDeleted(handler: (ev: RoomDeletedEvent) => void) {
+    this.emitter.on('RoomDeleted', handler as any);
   }
 
-  onImageDeleted(handler) {
-    this.emitter.on('ImageDeleted', handler);
+  onImageDeleted(handler: (ev: ImageProcessedEvent) => void) {
+    this.emitter.on('ImageDeleted', handler as any);
   }
 
-  onChatMessage(handler) {
-    this.emitter.on('ChatMessage', handler);
+  onChatMessage(handler: (ev: ChatMessageEvent) => void) {
+    this.emitter.on('ChatMessage', handler as any);
   }
 }
 
-async function send(url: string, method: string, params?: object) {
+async function send<TRes>(
+  url: string,
+  method: string,
+  params?: object
+): Promise<TRes> {
   return fetch(url, {
     method: method,
     headers: {

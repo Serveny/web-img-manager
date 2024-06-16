@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test img web manager</title>
+  <link rel="stylesheet" href="styles/main.css" />
+  <script src="src/main.ts" type="module"></script>
+</head>
+
+<body style="background-color: dimgray;">
+  <div id="control-panel">
+    <select id="room-select">
+      <option value="0" selected="selected">Room 1</option>
+      <option value="1">Room 2</option>
+      <option value="2">Room 3</option>
+    </select>
+    <input type="file" id="imageInput" accept="image/*" multiple="true">
+    <button id="uploadBtn">Upload image</button>
+    <button id="deleteLobbyBtn">Delete lobby</button>
+    <button id="deleteRoomBtn">Delete room</button>
+    <button id="deleteFirstImgBtn">Delete first image</button>
+  </div>
+  <div id="lobby"></div>
+  <div id="chat-messages"></div>
+  <div id="chat-box">
+    <input type="text" id="chat-input">
+    <button id="sendChatMsgBtn">Send</button>
+  </div>
+</body>
+
+</html>

@@ -22,7 +22,7 @@ Little project to up and download image files to/from an actix rust server and g
 ## Examples
 
 - [x] 🧸 Plain HTML/JS example
-- [ ] 🧸 HTML/TS example frontend application with usable communication class
+- [x] 🧸 HTML/TS example frontend application with usable communication class
 
 ## Setup with Docker
 
