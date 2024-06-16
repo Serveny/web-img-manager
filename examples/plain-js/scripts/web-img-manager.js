@@ -38,7 +38,7 @@ class WebImgManager {
    * @throws {Error} response error
    */
   async upload_img(lobby_id, room_id, image) {
-    const url = `http://${server_addr}/upload/${lobby_id}/${room_id}`;
+    const url = `http://${this.server_addr}/upload/${lobby_id}/${room_id}`;
     const formData = new FormData();
     formData.append('image', image);
     return await fetch(url, {
@@ -56,7 +56,7 @@ class WebImgManager {
    * @throws {Error} response error
    */
   async delete(lobbyId, roomId, imgName) {
-    let url = `http://${server_addr}/delete/${lobbyId}`;
+    let url = `http://${this.server_addr}/delete/${lobbyId}`;
     if (roomId) url += `/${roomId}`;
     if (imgName) url += `/${imgName}`;
     return send(url, 'POST');
@@ -70,7 +70,7 @@ class WebImgManager {
    * @throws {Error} response error
    */
   async sendChatMessage(lobby_id, msg) {
-    let url = `http://${server_addr}/chat`;
+    let url = `http://${this.server_addr}/chat`;
     return send(url, 'POST', { lobby_id, msg });
   }
 
@@ -264,6 +264,6 @@ class EventEmitter {
    * @return {void}
    */
   destroy() {
-    this.listener.length = 0;
+    this.listeners.length = 0;
   }
 }
