@@ -1,6 +1,6 @@
-# wim (Web Image Manager Client)
+# Web-Img-Manager Bindings
 
-wim is an npm package that provides a TypeScript class to interact with the Rust-based Web Image Manager (web-img-manager) server. It allows for uploading and downloading image files, and receiving live notifications via WebSockets. This package is designed for use in a web application where different lobbies contain rooms for chatting and sharing pictures with others.
+This is an npm package that provides a TypeScript class to interact with the Rust-based web-img-manager server (https://github.com/Serveny/web-img-manager). It allows for uploading and downloading image files, and receiving live notifications via WebSockets. This package is designed for use in a web application where different lobbies for chatting and contain rooms for sharing pictures with others.
 
 ## Features
 
@@ -14,7 +14,7 @@ wim is an npm package that provides a TypeScript class to interact with the Rust
 To install the package, use npm:
 
 ```sh
-npm install wim
+npm install web-img-manager
 ```
 
 ## Usage
