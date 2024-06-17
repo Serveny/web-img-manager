@@ -8,6 +8,7 @@ name = "web-img-manager"
 version = "0.1.0"
 edition = "2021"
 authors = ["Serveny"]
+license = "MIT"
 
 [[bin]]
 name = "web-img-manager"

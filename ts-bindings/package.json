@@ -21,6 +21,6 @@
     "type-script"
   ],
   "author": "Serveny",
-  "license": "ISC",
+  "license": "MIT",
   "public": true
 }
