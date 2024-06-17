@@ -1,11 +1,6 @@
-import {
-  ChatMessageEvent,
-  ImageProcessedEvent,
-  LobbyDeletedEvent,
-  RoomDeletedEvent,
-  Success,
-  UploadResult,
-} from './rs-bindings';
+import { Notifications } from './notifications';
+import { Success, UploadResult } from './rs-bindings';
+
 /**
  * @fileOverview Bindings for web img manager
  * @author Serveny
@@ -30,6 +25,14 @@ export class WebImgManager {
       `http://${this.server_addr}/list/${lobby_id}/${room_id}`,
       'GET'
     );
+  }
+
+  img_src(lobby_id: LobbyId, room_id: RoomId, img_id: ImgId): string {
+    return `http://${this.server_addr}/img/${lobby_id}/${room_id}/${img_id}`;
+  }
+
+  thumb_img_src(lobby_id: LobbyId, room_id: RoomId, img_id: ImgId): string {
+    return `http://${this.server_addr}/img/thumb/${lobby_id}/${room_id}/${img_id}`;
   }
 
   async upload_img(
@@ -71,65 +74,6 @@ export class WebImgManager {
   }
 }
 
-/** Class for communication with web img manager web socket server. */
-export class Notifications {
-  emitter = new EventEmitter();
-
-  constructor(server_addr: string, lobby_id: LobbyId) {
-    const socket = new WebSocket(`ws://${server_addr}/ws/${lobby_id}`);
-
-    // Declare Events
-    socket.addEventListener('open', (event) => {
-      this.emitter.emit('Connected', event);
-    });
-
-    socket.addEventListener('close', (event) => {
-      this.emitter.emit('Disconnected', event);
-    });
-
-    socket.addEventListener('error', (event) => {
-      this.emitter.emit('Error', event);
-    });
-
-    socket.addEventListener('message', (event) => {
-      const evData = JSON.parse(event.data);
-      this.emitter.emit(evData.event, evData);
-    });
-  }
-
-  onConnected(handler: (ev: Event) => void) {
-    this.emitter.on('Connected', handler);
-  }
-
-  onDisconnected(handler: (ev: Event) => void) {
-    this.emitter.on('Disonnected', handler);
-  }
-
-  onError(handler: (ev: Event) => void) {
-    this.emitter.on('Error', handler);
-  }
-
-  onImageUploaded(handler: (ev: ImageProcessedEvent) => void) {
-    this.emitter.on('ImageUploaded', handler as any);
-  }
-
-  onLobbyDeleted(handler: (ev: LobbyDeletedEvent) => void) {
-    this.emitter.on('LobbyDeleted', handler as any);
-  }
-
-  onRoomDeleted(handler: (ev: RoomDeletedEvent) => void) {
-    this.emitter.on('RoomDeleted', handler as any);
-  }
-
-  onImageDeleted(handler: (ev: ImageProcessedEvent) => void) {
-    this.emitter.on('ImageDeleted', handler as any);
-  }
-
-  onChatMessage(handler: (ev: ChatMessageEvent) => void) {
-    this.emitter.on('ChatMessage', handler as any);
-  }
-}
-
 async function send<TRes>(
   url: string,
   method: string,
@@ -151,36 +95,4 @@ async function send<TRes>(
     }
     return response.json();
   });
-}
-
-export class Listener<Ev> {
-  constructor(public name: string, public callback: (ev: Ev) => void) {}
-}
-
-/** Helper Class for event emitting */
-export class EventEmitter {
-  listeners: Listener<Event>[] = [];
-
-  emit(eventName: string, event: Event) {
-    this.listeners
-      .filter(({ name }) => name === eventName)
-      .forEach(({ callback }) => callback(event), 0);
-  }
-
-  on(name: string, callback: (ev: Event) => void) {
-    if (typeof callback === 'function' && typeof name === 'string') {
-      this.listeners.push({ name, callback });
-    }
-  }
-
-  off(eventName: string, callback: (ev: Event) => void) {
-    this.listeners = this.listeners.filter(
-      (listener) =>
-        !(listener.name === eventName && listener.callback === callback)
-    );
-  }
-
-  destroy() {
-    this.listeners.length = 0;
-  }
 }

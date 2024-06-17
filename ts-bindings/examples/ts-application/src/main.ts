@@ -3,7 +3,6 @@ import { ImgId, Notifications, RoomId, WebImgManager } from 'web-img-manager';
 const server_addr = '127.0.0.1:1871';
 const lobby_id = '6a766d31-71d5-4a34-8df5-124b9614b19f';
 const web_img_manager = new WebImgManager(server_addr).connect(lobby_id);
-
 const notify = web_img_manager.notifications;
 if (notify) addNotifications(notify);
 else console.warn('Notifications not available');
@@ -89,9 +88,9 @@ function addImg(
   isThumb: boolean
 ) {
   const imgEl = document.createElement('img');
-  imgEl.src = `http://${server_addr}/img/${
-    isThumb ? 'thumb/' : ''
-  }${lobby_id}/${room_id}/${img_id}`;
+  imgEl.src = isThumb
+    ? web_img_manager.thumb_img_src(lobby_id, room_id, img_id)
+    : web_img_manager.img_src(lobby_id, room_id, img_id);
   imgEl.setAttribute('data-img-id', img_id.toString());
   imgEl.setAttribute('style', 'max-width: 100%');
   roomEl.append(imgEl);

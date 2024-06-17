@@ -2,8 +2,8 @@
   "name": "web-img-manager",
   "version": "1.0.0",
   "description": "Typescript api connector for web-img-manager",
-  "main": "dist/web-img-manager.js",
-  "types": "dist/web-img-manager.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/ && tsc"
   },
