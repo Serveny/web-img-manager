@@ -1,4 +1,4 @@
-import { ImgId, Notifications, RoomId, WebImgManager } from './web-img-manager';
+import { ImgId, Notifications, RoomId, WebImgManager } from 'web-img-manager';
 
 const server_addr = '127.0.0.1:1871';
 const lobby_id = '6a766d31-71d5-4a34-8df5-124b9614b19f';

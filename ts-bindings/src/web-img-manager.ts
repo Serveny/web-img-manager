@@ -153,12 +153,12 @@ async function send<TRes>(
   });
 }
 
-class Listener<Ev> {
+export class Listener<Ev> {
   constructor(public name: string, public callback: (ev: Ev) => void) {}
 }
 
 /** Helper Class for event emitting */
-class EventEmitter {
+export class EventEmitter {
   listeners: Listener<Event>[] = [];
 
   emit(eventName: string, event: Event) {

@@ -5,8 +5,10 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "generate-bindings": "cargo test && node ./combine-bindings.js && rimraf ./src/bindings/",
     "dev": "vite"
+  },
+  "dependencies": {
+    "web-img-manager": "file:../../"
   },
   "devDependencies": {
     "typescript": "^5.4",
