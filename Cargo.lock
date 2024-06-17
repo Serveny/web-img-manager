@@ -524,6 +524,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "blockhash"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4c544959f633e4ac1f04f841f5a1e1d12a0cfb787b9c1475f3f78eaf1bc1c2e"
+dependencies = [
+ "image",
+]
+
+[[package]]
 name = "brotli"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2692,6 +2701,7 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "base64",
+ "blockhash",
  "env_logger",
  "image",
  "log",

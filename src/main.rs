@@ -25,7 +25,7 @@ mod utils;
 pub type LobbyId = Uuid;
 pub type RoomId = u32;
 pub type SessionId = Uuid;
-pub type ImgId = u32;
+pub type ImgId = u16;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

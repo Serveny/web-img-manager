@@ -5,8 +5,7 @@
   "main": "dist/web-img-manager.js",
   "types": "dist/web-img-manager.d.ts",
   "scripts": {
-    "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/",
-    "build": "tsc"
+    "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/ && tsc"
   },
   "devDependencies": {
     "typescript": "^5.4",

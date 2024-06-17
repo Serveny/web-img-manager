@@ -1,7 +1,9 @@
 use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
 use actix_web::{http::header, HttpResponse};
+use blockhash::blockhash16;
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
+use log::info;
 use serde_json::{from_value, Value};
 use std::{
     collections::HashMap,
@@ -83,7 +85,7 @@ pub fn save_img(
     lobby_id: &LobbyId,
     room_id: &RoomId,
     img_storage_path: &str,
-) -> Result<u32, String> {
+) -> Result<ImgId, String> {
     // Check storage path
     let storage_path = Path::new(img_storage_path);
     if !storage_path.exists() {
@@ -99,13 +101,13 @@ pub fn save_img(
     }
 
     // Save big image
-    let img_id = get_filenames_as_u32(&img_folder_path)
-        .iter()
-        .max()
-        .unwrap_or(&0)
-        + 1;
+    let img_id: ImgId = blockhash16(&img).into();
 
     let img_path = img_folder_path.join(img_id_to_filename(img_id));
+    if img_path.exists() {
+        info!("img_id {img_id} already exists, skip picture");
+        return Ok(img_id);
+    }
     if let Err(err) = img.to_rgb8().save_with_format(img_path, ImageFormat::Jpeg) {
         return Err(err.to_string());
     }
@@ -128,20 +130,20 @@ pub fn save_img(
     Ok(img_id)
 }
 
-pub fn get_filenames_as_u32(folder_path: &PathBuf) -> Vec<ImgId> {
-    let entry_to_u32 = |entry: Result<DirEntry, Error>| {
+pub fn get_filenames_as_img_id(folder_path: &PathBuf) -> Vec<ImgId> {
+    let entry_to_img_id = |entry: Result<DirEntry, Error>| {
         entry.ok().and_then(|e| {
             e.file_name()
                 .to_string_lossy()
                 .to_lowercase()
                 .trim_matches(|c: char| !c.is_numeric())
-                .parse::<u32>()
+                .parse::<ImgId>()
                 .ok()
         })
     };
     fs::read_dir(folder_path)
         .ok()
-        .map(|entries| entries.filter_map(entry_to_u32).collect())
+        .map(|entries| entries.filter_map(entry_to_img_id).collect())
         .unwrap_or_else(Vec::new)
 }
 

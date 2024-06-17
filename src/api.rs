@@ -7,7 +7,7 @@ use crate::{
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
-        get_filenames_as_u32, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
+        get_filenames_as_img_id, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
         resize_image, save_img, ImgType,
     },
     ImgId, LobbyId, RoomId,
@@ -60,7 +60,7 @@ pub async fn get_room_img_list(
     let folder_path = Path::new(&cfg.images_storage_path)
         .join(lobby_id)
         .join(room_id);
-    let filenames = get_filenames_as_u32(&folder_path);
+    let filenames = get_filenames_as_img_id(&folder_path);
 
     HttpResponse::Ok().json(filenames)
 }
