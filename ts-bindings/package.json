@@ -9,7 +9,8 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "typescript": "^5.4"
+    "typescript": "^5.4",
+    "vite": "5.3"
   },
   "keywords": [
     "bindings",

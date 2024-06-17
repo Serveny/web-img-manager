@@ -12,9 +12,8 @@ export default defineConfig(async ({ mode }) => {
       cssMinify: true,
       minify: true,
       sourcemap: false,
-      outDir: './dist/app/',
+      outDir: './dist/',
     },
-    assetsInclude: ['**/*.svg'],
     root: './',
     base: '',
   };
