@@ -28,11 +28,11 @@ Little project to up and download image files to/from an actix rust server and g
 
 1. **Create web-image-manager storage volume**: `docker volume create wim-storage`
 2. **Build**: `docker build -t web-img-manager .`
-3. **Run in interactive mode**: `docker run -p 1870:1870 -v wim-storage:/wim-storage --rm --name wim -it web-img-manager bash` to create and edit config
+3. **Run in interactive mode**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name wim -it web-img-manager bash` to create and edit config
    - **Copy**: `cp /wim-storage/config/default-server-config.json /wim-storage/config/server-config.json`
    - **Edit**: `nano /wim-storage/config/server-config.json` Change `images_storage_path` to `/wim-storage/pictures`
    - **Exit**: After saving file write exit in console
-4. **Run**: `docker run -p 1870:1870 -v wim-storage:/wim-storage --rm --name wim web-img-manager`
+4. **Run**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name wim web-img-manager`
 
 ## API
 
@@ -182,7 +182,7 @@ Little project to up and download image files to/from an actix rust server and g
   <tr>
     <td><code>port</code></td>
     <td>Server port</td>
-    <td><code>1870</code></td>
+    <td><code>1871</code></td>
   </tr>
   <tr>
     <td><code>images_storage_path</code></td>

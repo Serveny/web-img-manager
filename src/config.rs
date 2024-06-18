@@ -24,7 +24,7 @@ impl Default for ServerConfig {
     fn default() -> Self {
         Self {
             url: String::from("0.0.0.0"),
-            port: 1870,
+            port: 1871,
             images_storage_path: String::from("/wim_storage/pictures"),
             max_image_size_byte: 1024 * 1024 * 20, // 20 MB
             permissions: Permissions::default(),

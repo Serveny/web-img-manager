@@ -54,7 +54,7 @@ RUN USER=root mkdir /wim-storage/pictures/
 # link to config folder
 RUN ln -s /wim-storage/config/ /usr/local/bin/
 
-EXPOSE 1870 
+EXPOSE 1871 
 
 # Set workdir to folder with binary and config link
 WORKDIR /usr/local/bin/

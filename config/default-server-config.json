@@ -1,6 +1,6 @@
 {
   "url": "0.0.0.0",
-  "port": 1870,
+  "port": 1871,
   "images_storage_path": "./img-test-storage",
   "max_image_size_byte": 20971520,
   "permissions": {
