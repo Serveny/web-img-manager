@@ -1,8 +1,8 @@
 use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
 use actix_web::{http::header, HttpResponse};
-use blockhash::blockhash16;
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
+use image_hasher::{HashAlg, HasherConfig, ImageHash};
 use log::info;
 use serde_json::{from_value, Value};
 use std::{
@@ -101,7 +101,13 @@ pub fn save_img(
     }
 
     // Save big image
-    let img_id: ImgId = blockhash16(&img).into();
+    let img_id: ImgId = hash_to_u32(
+        HasherConfig::new()
+            .hash_alg(HashAlg::Blockhash)
+            .hash_size(8, 4)
+            .to_hasher()
+            .hash_image(&img),
+    );
 
     let img_path = img_folder_path.join(img_id_to_filename(img_id));
     if img_path.exists() {
@@ -172,6 +178,19 @@ pub fn rename_with_value(map: &mut HashMap<String, Value>, key: &str, val: Strin
             *new_key = Value::String(val);
         }
     }
+}
+
+fn hash_to_u32(hash: ImageHash) -> u32 {
+    // Take first 32 bit of hash
+    let hash_bits = hash.as_bytes();
+    let mut hash_u32 = 0u32;
+
+    // Convert to u32
+    for (i, &byte) in hash_bits.iter().take(4).enumerate() {
+        hash_u32 |= (byte as u32) << (8 * i);
+    }
+
+    hash_u32
 }
 
 pub trait ParamTuple {
