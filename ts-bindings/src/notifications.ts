@@ -7,12 +7,18 @@ import {
 } from './rs-bindings';
 import { LobbyId } from './web-img-manager';
 
+export type NotificationsProtocol = 'ws' | 'wss';
+
 /** Class for communication with web img manager web socket server. */
 export class Notifications {
   emitter = new EventEmitter();
 
-  constructor(server_addr: string, lobby_id: LobbyId) {
-    const socket = new WebSocket(`ws://${server_addr}/ws/${lobby_id}`);
+  constructor(
+    server_addr: string,
+    lobby_id: LobbyId,
+    protocol: NotificationsProtocol = 'ws'
+  ) {
+    const socket = new WebSocket(`${protocol}://${server_addr}/ws/${lobby_id}`);
 
     // Declare Events
     socket.addEventListener('open', (event) => {

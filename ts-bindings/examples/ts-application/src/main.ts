@@ -2,7 +2,8 @@ import { ImgId, Notifications, RoomId, WebImgManager } from 'web-img-manager';
 
 const server_addr = '127.0.0.1:1871';
 const lobby_id = '6a766d31-71d5-4a34-8df5-124b9614b19f';
-const web_img_manager = new WebImgManager(server_addr).connect(lobby_id);
+const web_img_manager = new WebImgManager(server_addr, 'http');
+web_img_manager.connect(lobby_id, 'ws');
 const notify = web_img_manager.notifications;
 if (notify) addNotifications(notify);
 else console.warn('Notifications not available');
@@ -120,7 +121,6 @@ async function deleteFirstImage() {
     getRoomElById(roomId)
       ?.getElementsByTagName('img')[0]
       .getAttribute('data-img-id') ?? '0';
-  console.log(roomId, firstImage);
   if (firstImage)
     web_img_manager.delete(lobby_id, roomId, parseInt(firstImage));
 }
