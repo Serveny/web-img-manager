@@ -22,6 +22,9 @@ mod permission;
 mod public_messages;
 mod utils;
 
+#[cfg(feature = "openssl")]
+mod certificate;
+
 pub type LobbyId = Uuid;
 pub type RoomId = u32;
 pub type SessionId = Uuid;

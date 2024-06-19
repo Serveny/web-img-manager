@@ -1,7 +1,7 @@
 {
   "url": "0.0.0.0",
   "port": 1871,
-  "images_storage_path": "./img-test-storage",
+  "images_storage_path": "./wim-storage/pictures",
   "max_image_size_byte": 20971520,
   "permissions": {
     "get_room_list": {

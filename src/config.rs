@@ -18,6 +18,8 @@ pub struct ServerConfig {
 
     // upload permission
     pub permissions: Permissions,
+
+    pub certificate_folder_path: String,
 }
 
 impl Default for ServerConfig {
@@ -28,6 +30,7 @@ impl Default for ServerConfig {
             images_storage_path: String::from("/wim_storage/pictures"),
             max_image_size_byte: 1024 * 1024 * 20, // 20 MB
             permissions: Permissions::default(),
+            certificate_folder_path: String::from("/wim_storage/cert"),
         }
     }
 }

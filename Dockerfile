@@ -2,7 +2,7 @@
 ##### Builder
 ################
 
-FROM rust:1.79.0 as builder
+FROM rust:latest as builder
 
 WORKDIR /usr/src
 
@@ -47,6 +47,9 @@ COPY --from=builder /usr/src/web-img-manager/target/release/web-img-manager /usr
 
 # Copy default config to volume
 COPY --from=builder /usr/src/web-img-manager/config/default-server-config.json /wim-storage/config/default-server-config.json
+
+# Create certificates folder
+RUN USER=root mkdir /wim-storage/cert/
 
 # Create default picture folder
 RUN USER=root mkdir /wim-storage/pictures/
