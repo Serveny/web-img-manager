@@ -39,6 +39,9 @@ async fn main() -> std::io::Result<()> {
     });
     let server = (server_cfg.url.clone(), server_cfg.port);
 
+    #[cfg(feature = "openssl")]
+    let certificate_folder_path = server_cfg.certificate_folder_path.clone();
+
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
 
@@ -78,12 +81,24 @@ async fn main() -> std::io::Result<()> {
             .service(delete_img)
             .service(send_chat_message)
             .service(test)
-    })
-    .bind(&server)?
-    .run();
+    });
+
+    #[cfg(feature = "openssl")]
+    let res = match certificate_folder_path {
+        Some(path) => res.bind_openssl(
+            &server,
+            certificate::load_ssl_certificate(&path)
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?,
+        )?,
+
+        None => res.bind(&server)?,
+    };
+
+    #[cfg(not(feature = "openssl"))]
+    let res = res.bind(&server)?;
 
     println!("Server listening to {}:{}", server.0, server.1);
-    res.await
+    res.run().await
 }
 
 fn cors_cfg() -> Cors {

@@ -16,7 +16,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📰 upload live notification
 - [x] 📰 delete lobby/room/image live notification
 - [x] 💬 live chat
-- [ ] 🔗 TS bindins for public messages
+- [x] 🔗 TS bindins for public messages
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
 ## Examples
@@ -37,7 +37,6 @@ Little project to up and download image files to/from an actix rust server and g
 ## Or build yourself and run with Docker
 
 1. Download this repository and open terminal inside the repository path
-   _Under Windows systems (Strawberry Perl)[https://strawberryperl.com/] must be installed for compiling OpenSSL_
 2. **Create web-image-manager storage volume**: `docker volume create wim-storage`
 3. **Build**: `docker build -t web-img-manager .`
 4. **Run in interactive mode**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name wim -it web-img-manager bash` to create and edit config

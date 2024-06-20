@@ -26,7 +26,7 @@ COPY config /usr/src/web-img-manager/config/
 RUN touch /usr/src/web-img-manager/src/main.rs
 
 # This is the actual application build.
-RUN cargo build --release
+RUN cargo build --release --features openssl
 
 
 

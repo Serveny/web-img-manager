@@ -1,4 +1,4 @@
-use crate::{config::ServerConfig, ImgId, LobbyId, RoomId};
+use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
 use actix_web::{http::header, HttpResponse};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
