@@ -45,6 +45,13 @@ Little project to up and download image files to/from an actix rust server and g
    - **Exit**: After saving file write exit in console
 5. **Run**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name wim web-img-manager`
 
+## Add HTTPS support
+
+1. You need a certificate (`cert.pem`) and a private key (`key.pem`) file from your certification provider (for example https://letsencrypt.org/)
+2. feature `openssl` for rust build must be enabled (is enabled by default in the dockerfile, but not in the cargo build/run. Use `cargo run --features openssl` for local tests)
+3. Upload files and set configuration option `cert_pem_path` and `key_pem_path` to the path of your files (for example `/wim-storage/cert/cert.pem` and `/wim-storage/cert/key.pem`)
+4. (Re)start server
+
 ## API
 
 #### Types

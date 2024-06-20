@@ -1,8 +1,6 @@
 use actix::prelude::*;
-use actix_cors::Cors;
 use actix_web::{
     error::InternalError,
-    http::header,
     middleware::Logger,
     web::{Data, JsonConfig},
     App, HttpResponse, HttpServer,
@@ -11,7 +9,7 @@ use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
     get_room_list, handle_options, send_chat_message, test, upload_img,
 };
-use config::{read_server_config, ServerConfig};
+use config::{cors_cfg, read_server_config, ServerConfig};
 use notification::server::NotifyServer;
 use uuid::Uuid;
 
@@ -40,7 +38,10 @@ async fn main() -> std::io::Result<()> {
     let server = (server_cfg.url.clone(), server_cfg.port);
 
     #[cfg(feature = "openssl")]
-    let certificate_folder_path = server_cfg.certificate_folder_path.clone();
+    let cert_pem_path = server_cfg.cert_pem_path.clone();
+
+    #[cfg(feature = "openssl")]
+    let key_pem_path = server_cfg.key_pem_path.clone();
 
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
@@ -84,33 +85,27 @@ async fn main() -> std::io::Result<()> {
     });
 
     #[cfg(feature = "openssl")]
-    let res = match certificate_folder_path {
-        Some(path) => res.bind_openssl(
-            &server,
-            certificate::load_ssl_certificate(&path)
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?,
-        )?,
-
-        None => res.bind(&server)?,
-    };
+    let res = match (cert_pem_path, key_pem_path) {
+        (Some(cert_path), Some(key_path)) => {
+            println!("SSL active");
+            res.bind_openssl(
+                &server,
+                certificate::load_ssl_certificate(&cert_path, &key_path)
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?,
+            )
+        }
+        (None, None) => Ok(res.bind(&server)?),
+        _ => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Wrong configuration: cert.pem and key.pem needed.",
+            ))
+        }
+    }?;
 
     #[cfg(not(feature = "openssl"))]
     let res = res.bind(&server)?;
 
     println!("Server listening to {}:{}", server.0, server.1);
     res.run().await
-}
-
-fn cors_cfg() -> Cors {
-    Cors::default()
-        .allowed_methods(vec!["GET", "POST"])
-        .allowed_headers(vec![
-            header::AUTHORIZATION,
-            header::ACCEPT,
-            header::CONTENT_TYPE,
-            header::CONTENT_LENGTH,
-        ])
-        .allow_any_origin()
-        .supports_credentials()
-        .max_age(3600)
 }
