@@ -32,7 +32,7 @@ Little project to up and download image files to/from an actix rust server and g
    - **Copy**: `cp /wim-storage/config/default-server-config.json /wim-storage/config/server-config.json`
    - **Edit**: `nano /wim-storage/config/server-config.json` Change `images_storage_path` to `/wim-storage/pictures`
    - **Exit**: After saving file write exit in console.
-4. **Run**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name serveny/wim web-img-manager`
+4. **Run**: `docker run -p 1871:1871 -v wim-storage:/wim-storage --rm --name wim serveny/web-img-manager`
 
 ## Or build yourself and run with Docker
 
