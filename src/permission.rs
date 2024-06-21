@@ -1,4 +1,6 @@
-use crate::{utils::ParamTuple, LobbyId, RoomId};
+use crate::{
+    public_messages::permission::ConfirmationResponse, utils::ParamTuple, LobbyId, RoomId,
+};
 use actix_web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -96,7 +98,7 @@ impl ConfirmationRequest {
         let client = reqwest::Client::new();
         let req = client.post(&self.url).json(params);
 
-        serde_json::from_str(
+        let response: ConfirmationResponse = serde_json::from_str(
             &req.send()
                 .await
                 .map_err(|err| err.to_string())?
@@ -104,14 +106,16 @@ impl ConfirmationRequest {
                 .await
                 .map_err(|err| err.to_string())?,
         )
-        .map_err(|err| err.to_string())
-    }
-}
+        .map_err(|err| err.to_string())?;
 
-#[derive(Serialize, Deserialize)]
-pub struct ConfirmationResponse {
-    is_allowed: bool,
-    msg: String,
+        match response.is_allowed {
+            true => Ok(()),
+            false => Err(format!(
+                "Not allowed: {}",
+                response.error_msg.unwrap_or_default()
+            )),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
