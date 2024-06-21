@@ -98,15 +98,15 @@ impl ConfirmationRequest {
         let client = reqwest::Client::new();
         let req = client.post(&self.url).json(params);
 
-        let response: ConfirmationResponse = serde_json::from_str(
-            &req.send()
-                .await
-                .map_err(|err| err.to_string())?
-                .text()
-                .await
-                .map_err(|err| err.to_string())?,
-        )
-        .map_err(|err| err.to_string())?;
+        let response = &req
+            .send()
+            .await
+            .map_err(|err| err.to_string())?
+            .text()
+            .await
+            .map_err(|err| err.to_string())?;
+        let response: ConfirmationResponse = serde_json::from_str(&response)
+            .map_err(|err| format!("Can't parse response: {} | {}", err.to_string(), response))?;
 
         match response.is_allowed {
             true => Ok(()),
