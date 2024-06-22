@@ -170,12 +170,13 @@ pub fn img_id_to_filename(img_id: ImgId) -> String {
     format!("{}.jpg", img_id)
 }
 
-pub fn rename_with_value(map: &mut HashMap<String, Value>, key: &str, val: String) {
+pub fn rename_with_value<T: Into<Value>>(map: &mut HashMap<String, Value>, key: &str, val: T) {
     if let Some(new_key) = map.get_mut(key) {
         if let Ok(new_key) = from_value::<String>(new_key.clone()) {
-            map.insert(new_key, Value::String(val));
+            map.insert(new_key, val.into());
+            map.remove(key);
         } else {
-            *new_key = Value::String(val);
+            *new_key = val.into();
         }
     }
 }
@@ -206,14 +207,14 @@ impl ParamTuple for (LobbyId,) {
 impl ParamTuple for (LobbyId, RoomId) {
     fn edit_param_map(&self, map: &mut HashMap<String, Value>) {
         rename_with_value(map, "lobby_id", self.0.to_string());
-        rename_with_value(map, "room_id", self.1.to_string());
+        rename_with_value(map, "room_id", self.1);
     }
 }
 
 impl ParamTuple for (LobbyId, RoomId, ImgId) {
     fn edit_param_map(&self, map: &mut HashMap<String, Value>) {
         rename_with_value(map, "lobby_id", self.0.to_string());
-        rename_with_value(map, "room_id", self.1.to_string());
-        rename_with_value(map, "img_id", self.2.to_string());
+        rename_with_value(map, "room_id", self.1);
+        rename_with_value(map, "img_id", self.2);
     }
 }

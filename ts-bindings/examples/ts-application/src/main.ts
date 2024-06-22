@@ -109,9 +109,12 @@ async function uploadImage() {
   const room_id = parseInt(roomSelect.value);
   for (const file of imageInput.files!) {
     if (file == null) continue;
-    web_img_manager.upload_img(lobby_id, room_id, file).then(({ img_id }) => {
-      if (web_img_manager.notifications == null) addImgs(room_id, img_id);
-    });
+    web_img_manager
+      .upload_img(lobby_id, room_id, file)
+      .then(({ img_id }) => {
+        if (web_img_manager.notifications == null) addImgs(room_id, img_id);
+      })
+      .catch((err) => console.error(err));
   }
 }
 

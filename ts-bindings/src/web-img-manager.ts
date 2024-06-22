@@ -45,12 +45,13 @@ export class WebImgManager {
     const formData = new FormData();
     formData.append('image', image);
 
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: 'POST',
       body: formData,
     });
 
-    return res.json();
+    if (response.ok !== true) throw Error(await response.text());
+    return response.json();
   }
 
   async delete(
@@ -87,20 +88,21 @@ async function send<TRes>(
   method: string,
   params?: object
 ): Promise<TRes> {
-  return fetch(url, {
+  const response = await fetch(url, {
     method: method,
     headers: {
       'content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  }).then((response) => {
-    if (!response.ok) {
-      const error = new Error(
-        `Response error: ${response.status} - ${response.statusText}`
-      );
-      console.error(error);
-      throw error;
-    }
-    return response.json();
   });
+
+  if (response.ok !== true) {
+    throw new Error(
+      `Response error: ${response.status} - ${
+        response.statusText
+      } - ${await response.text()}`
+    );
+  }
+
+  return response.json();
 }

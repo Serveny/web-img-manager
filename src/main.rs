@@ -10,6 +10,7 @@ use api::{
     get_room_list, handle_options, send_chat_message, test, upload_img,
 };
 use config::{cors_cfg, read_server_config, ServerConfig};
+use log::{error, info};
 use notification::server::NotifyServer;
 use uuid::Uuid;
 
@@ -32,7 +33,7 @@ pub type ImgId = u32;
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
     let server_cfg: ServerConfig = read_server_config().unwrap_or_else(|err| {
-        println!("{err}. Using hardcoded default config instead");
+        error!("{err}. Using hardcoded default config instead");
         ServerConfig::default()
     });
     let server = (server_cfg.url.clone(), server_cfg.port);
@@ -87,7 +88,7 @@ async fn main() -> std::io::Result<()> {
     #[cfg(feature = "openssl")]
     let res = match (cert_pem_path, key_pem_path) {
         (Some(cert_path), Some(key_path)) => {
-            println!("SSL active");
+            info!("SSL active");
             res.bind_openssl(
                 &server,
                 certificate::load_ssl_certificate(&cert_path, &key_path)
@@ -106,6 +107,6 @@ async fn main() -> std::io::Result<()> {
     #[cfg(not(feature = "openssl"))]
     let res = res.bind(&server)?;
 
-    println!("Server listening to {}:{}", server.0, server.1);
+    info!("Server listening to {}:{}", server.0, server.1);
     res.run().await
 }
