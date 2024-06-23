@@ -37,8 +37,8 @@ RUN cargo build --release --features openssl
 
 FROM ubuntu:latest AS runtime 
 
-# Install nano
-RUN apt update && apt install -y nano
+# Install nano & certificates
+RUN apt update && apt install -y nano ca-certificates && update-ca-certificates
 
 VOLUME "/wim-storage"
 

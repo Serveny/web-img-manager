@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Deserialize, TS)]
+#[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ConfirmationResponse {
     pub is_allowed: bool,

@@ -2,7 +2,6 @@ use crate::{
     public_messages::permission::ConfirmationResponse, utils::ParamTuple, LobbyId, RoomId,
 };
 use actix_web::{HttpRequest, HttpResponse};
-use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -97,23 +96,20 @@ pub struct ConfirmationRequest {
 impl ConfirmationRequest {
     async fn is_allowed(&self, params: &HashMap<String, Value>) -> Result<(), String> {
         let client = reqwest::Client::new();
-        debug!(
-            "Confirmation params: {}",
-            serde_json::to_string(params).unwrap_or_default()
-        );
+
         let mut req = client.post(&self.url);
         if !params.is_empty() {
             req = req.json(params);
         }
-
         let response = &req
             .send()
             .await
-            .map_err(|err| format!("Can't send confirmation request: {}", err.to_string()))?
+            .map_err(|err| format!("Can't send confirmation request: {:?}", err))?
             .text()
             .await
-            .map_err(|err| format!("Can't read confirmation response: {}", err.to_string()))?;
+            .map_err(|err| format!("Can't read confirmation response: {:?}", err))?;
         let response: ConfirmationResponse = serde_json::from_str(&response).map_err(|err| {
+            eprintln!("Failed to send request: {:?}", err);
             format!(
                 "Can't parse confirmation response: {} | {}",
                 err.to_string(),
