@@ -5,10 +5,7 @@ use crate::{
         server::NotifyServer,
     },
     permission::check,
-    public_messages::{
-        api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
-        permission::ConfirmationResponse,
-    },
+    public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
         get_filenames_as_img_id, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
         resize_image, save_img, ImgType,
@@ -300,13 +297,4 @@ pub async fn send_chat_message(
 pub async fn test() -> impl Responder {
     debug!("Test ping");
     HttpResponse::Ok().body("Hello, world!")
-}
-
-#[post("/confirm")]
-pub async fn confirm() -> impl Responder {
-    debug!("Test confirm");
-    HttpResponse::Ok().json(ConfirmationResponse {
-        is_allowed: true,
-        error_msg: None,
-    })
 }

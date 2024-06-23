@@ -65,7 +65,7 @@ Little project to up and download image files to/from an actix rust server and g
   - `restriction`: Rescriction enum
 - `Restriction`: Choose one option <ul>
   <li><code>AllowedToAll</code>: Allow access from anywhere by anyone</li>
-  <li><code>NeedsConfimation</code>: Allow access after sending serverside confirmation request</li>
+  <li><code>NeedsConfimation</code>: Allow access after sending serverside confirmation request `"NeedsConfimation": {url: string, params: {string, any}, headers: {string, string} }`</li>
   <li><code>Denied</code>: Deny access</li>
 </ul>
 

@@ -2,6 +2,7 @@ use crate::{
     public_messages::permission::ConfirmationResponse, utils::ParamTuple, LobbyId, RoomId,
 };
 use actix_web::{HttpRequest, HttpResponse};
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -37,7 +38,7 @@ impl Permission {
             NeedsConfirmation(confirm_req) => {
                 let mut conf_params = confirm_req.params.clone();
                 params.edit_param_map(&mut conf_params);
-                confirm_req.is_allowed(&conf_params).await
+                confirm_req.is_allowed(conf_params).await
             }
             Denied => Err(self.restriction.to_string()),
         })
@@ -91,17 +92,19 @@ impl Restriction {
 pub struct ConfirmationRequest {
     url: String,
     params: HashMap<String, Value>,
+    headers: HashMap<String, String>,
 }
 
 impl ConfirmationRequest {
-    async fn is_allowed(&self, params: &HashMap<String, Value>) -> Result<(), String> {
+    async fn is_allowed(&self, params: HashMap<String, Value>) -> Result<(), String> {
         let client = reqwest::Client::new();
 
-        let mut req = client.post(&self.url);
+        let mut req = client.post(&self.url).headers(self.header_map()?);
         if !params.is_empty() {
-            req = req.json(params);
+            req = req.json(&params);
         }
         let response = &req
+            .headers(self.header_map()?)
             .send()
             .await
             .map_err(|err| format!("Can't send confirmation request: {:?}", err))?
@@ -109,7 +112,6 @@ impl ConfirmationRequest {
             .await
             .map_err(|err| format!("Can't read confirmation response: {:?}", err))?;
         let response: ConfirmationResponse = serde_json::from_str(&response).map_err(|err| {
-            eprintln!("Failed to send request: {:?}", err);
             format!(
                 "Can't parse confirmation response: {} | {}",
                 err.to_string(),
@@ -124,6 +126,17 @@ impl ConfirmationRequest {
                 response.error_msg.unwrap_or_default()
             )),
         }
+    }
+
+    fn header_map(&self) -> Result<HeaderMap, String> {
+        let mut headers = HeaderMap::new();
+        for (key, value) in self.headers.clone() {
+            let header_name =
+                HeaderName::from_bytes(key.as_bytes()).map_err(|err| err.to_string())?;
+            let header_value = HeaderValue::from_str(&value).map_err(|err| err.to_string())?;
+            headers.insert(header_name, header_value);
+        }
+        return Ok(headers);
     }
 }
 
