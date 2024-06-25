@@ -19,7 +19,7 @@ function addNotifications(notify: Notifications) {
   notify.onConnected((ev) => console.log('WS connected:', ev));
   notify.onDisconnected((ev) => console.log('WS disconnected:', ev));
   notify.onError((ev) => console.log('WS error:', ev));
-  notify.onImageUploaded((ev) => addImgs(ev.room_id, ev.img_id));
+  notify.onImageUploaded((ev) => prependImgWithRoom(ev.room_id, ev.img_id));
   notify.onImageDeleted((ev) => removeImgs(ev.room_id, ev.img_id));
   notify.onLobbyDeleted((_) => emtpyLobby());
   notify.onRoomDeleted((ev) => emtpyRoom(ev.room_id));
@@ -45,10 +45,9 @@ for (const roomId of [...roomSelect.options].map((o) => o.value))
   addRoomImgsToHtml(parseInt(roomId));
 
 async function addRoomImgsToHtml(room_id: RoomId) {
-  const img_ids = (
-    await web_img_manager.get_room_img_list(lobby_id, room_id)
-  ).reverse();
-  for (const img_id of img_ids) addImgs(room_id, img_id);
+  (await web_img_manager.get_room_img_list(lobby_id, room_id))
+    .reverse()
+    .forEach((img_id) => prependImgWithRoom(room_id, img_id));
 }
 
 function getOrInsertRoomEl(room_id: RoomId): HTMLDivElement {
@@ -76,7 +75,7 @@ function getOrInsertRoomEl(room_id: RoomId): HTMLDivElement {
   return roomConEl as HTMLDivElement;
 }
 
-function addImgs(room_id: RoomId, img_id: ImgId) {
+function prependImgWithRoom(room_id: RoomId, img_id: ImgId) {
   const roomEl = getOrInsertRoomEl(room_id);
   if (roomEl.querySelectorAll(`img[data-img-id='${img_id}']`).length > 0)
     return;
@@ -84,13 +83,13 @@ function addImgs(room_id: RoomId, img_id: ImgId) {
   // Add thumb image
   const roomImgsEl = roomEl.querySelector('.room-imgs');
   if (!roomImgsEl) return;
-  addImg(room_id, img_id, roomImgsEl as HTMLElement, true);
+  prependImg(room_id, img_id, roomImgsEl as HTMLElement, true);
 
   // Add big image
   //addImg(room_id, img_id, roomEl, false);
 }
 
-function addImg(
+function prependImg(
   room_id: RoomId,
   img_id: ImgId,
   roomEl: HTMLElement,
@@ -119,7 +118,8 @@ async function uploadImage() {
     web_img_manager
       .upload_img(lobby_id, room_id, file)
       .then(({ img_id }) => {
-        if (web_img_manager.notifications == null) addImgs(room_id, img_id);
+        if (web_img_manager.notifications == null)
+          prependImgWithRoom(room_id, img_id);
       })
       .catch((err) => console.error(err));
   }
