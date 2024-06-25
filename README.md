@@ -49,8 +49,10 @@ Little project to up and download image files to/from an actix rust server and g
 
 1. You need a certificate (`cert.pem`) and a private key (`key.pem`) file from your certification provider (for example https://letsencrypt.org/)
 2. feature `openssl` for rust build must be enabled (is enabled by default in the dockerfile, but not in the cargo build/run. Use `cargo run --features openssl` for local tests)
-3. Upload files and set configuration option `cert_pem_path` and `key_pem_path` to the path of your files (for example `/wim-storage/cert/cert.pem` and `/wim-storage/cert/key.pem`)
-4. (Re)start server
+3. Upload files (F.e. in console by `nano /wim-storage/cert/cert.pem` and copying the content of your file inside by cache) and set configuration options in `server-config.json`: <br>
+   `"cert_pem_path": "/wim-storage/cert/cert.pem",`<br>
+   `"key_pem_path": "/wim-storage/cert/key.pem",`</code>
+5. (Re)start server
 
 ## API
 
