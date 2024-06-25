@@ -1,4 +1,4 @@
-<h1><img src="assets/wim-logo-trans.png" alt="Logo" width="18" height="18"> Web Image Manager</h1>
+<h1><img src="assets/wim-logo-trans.png" alt="Logo" width="24" height="24"> Web Image Manager</h1>
 
 Little project to up and download image files to/from an actix rust server and get live notification with web sockets. It is intended for a web application in which there are different lobbies, each of which has rooms where you can chat or share your pictures with others.
 
