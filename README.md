@@ -94,7 +94,7 @@ Little project to up and download image files to/from an actix rust server and g
     <td><code>/list/{lobby_id}/{room_id}</code></td>
     <td>None</td>
     <td>JSON</td>
-    <td>JSON encoded list of int img_id's <br><code>[1,2,3,4,8]</code></td>
+    <td>JSON encoded list of int img_id's ordered descending by upload date<br><code>[1,2,3,4,8]</code></td>
   </tr>
   <tr>
     <td>get thumb image</td>

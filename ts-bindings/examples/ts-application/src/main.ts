@@ -45,7 +45,9 @@ for (const roomId of [...roomSelect.options].map((o) => o.value))
   addRoomImgsToHtml(parseInt(roomId));
 
 async function addRoomImgsToHtml(room_id: RoomId) {
-  const img_ids = await web_img_manager.get_room_img_list(lobby_id, room_id);
+  const img_ids = (
+    await web_img_manager.get_room_img_list(lobby_id, room_id)
+  ).reverse();
   for (const img_id of img_ids) addImgs(room_id, img_id);
 }
 
