@@ -60,9 +60,8 @@ pub async fn get_room_img_list(
     let folder_path = Path::new(&cfg.images_storage_path)
         .join(lobby_id)
         .join(room_id);
-    let filenames = get_filenames_as_img_id(&folder_path);
 
-    HttpResponse::Ok().json(filenames)
+    HttpResponse::Ok().json(get_filenames_as_img_id(&folder_path).unwrap_or_default())
 }
 
 #[get("/img/thumb/{lobby_id}/{room_id}/{img_id}")]

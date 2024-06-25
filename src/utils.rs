@@ -10,6 +10,7 @@ use std::{
     fs::{self, create_dir_all, DirEntry, File},
     io::{BufReader, Error, Read},
     path::{Path, PathBuf},
+    time::SystemTime,
 };
 
 #[derive(PartialEq, Eq)]
@@ -136,21 +137,35 @@ pub fn save_img(
     Ok(img_id)
 }
 
-pub fn get_filenames_as_img_id(folder_path: &PathBuf) -> Vec<ImgId> {
-    let entry_to_img_id = |entry: Result<DirEntry, Error>| {
-        entry.ok().and_then(|e| {
-            e.file_name()
-                .to_string_lossy()
-                .to_lowercase()
-                .trim_matches(|c: char| !c.is_numeric())
-                .parse::<ImgId>()
-                .ok()
-        })
+fn entry_to_img_id(entry: Result<DirEntry, Error>) -> Option<(ImgId, SystemTime)> {
+    let Ok(entry) = entry else {
+        return None;
     };
-    fs::read_dir(folder_path)
-        .ok()
-        .map(|entries| entries.filter_map(entry_to_img_id).collect())
-        .unwrap_or_else(Vec::new)
+
+    let img_id = entry
+        .file_name()
+        .to_string_lossy()
+        .to_lowercase()
+        .trim_matches(|c: char| !c.is_numeric())
+        .parse::<ImgId>();
+
+    let img_time = entry
+        .metadata()
+        .and_then(|metadata| metadata.modified())
+        .unwrap_or(SystemTime::UNIX_EPOCH);
+
+    match img_id {
+        Ok(img_id) => Some((img_id, img_time)),
+        Err(_) => None,
+    }
+}
+
+pub fn get_filenames_as_img_id(folder_path: &PathBuf) -> std::io::Result<Vec<ImgId>> {
+    let mut entries: Vec<(ImgId, SystemTime)> = fs::read_dir(folder_path)?
+        .filter_map(entry_to_img_id)
+        .collect();
+    entries.sort_by_key(|(_, time)| *time);
+    Ok(entries.into_iter().map(|(id, _)| id).collect())
 }
 
 pub fn get_foldernames_as_uuid(folder_path: &PathBuf) -> Vec<RoomId> {
