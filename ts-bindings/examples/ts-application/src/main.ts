@@ -49,25 +49,29 @@ async function addRoomImgsToHtml(room_id: RoomId) {
   for (const img_id of img_ids) addImgs(room_id, img_id);
 }
 
-function getOrInsertRoomEl(room_id: RoomId) {
-  let roomEl = lobbyEl.querySelector(`div[data-room-id='${room_id}']`);
-  if (!roomEl) {
-    roomEl = document.createElement('div');
-    roomEl.className = 'room';
+function getOrInsertRoomEl(room_id: RoomId): HTMLDivElement {
+  let roomConEl = lobbyEl.querySelector(`div[data-room-id='${room_id}']`);
+  if (!roomConEl) {
+    const roomImgsEl = document.createElement('div') as HTMLDivElement;
     const roomId = room_id.toString();
-    roomEl.setAttribute('data-room-id', roomId);
-    roomEl.id = roomId;
-
+    roomImgsEl.setAttribute('data-room-id', roomId);
+    roomImgsEl.className = 'room-imgs';
     const label = document.createElement('label');
     label.htmlFor = roomId;
     label.textContent =
       document.querySelector(`#room-select option[value="${roomId}"`)
         ?.textContent ?? '';
 
-    lobbyEl.appendChild(label);
-    lobbyEl.appendChild(roomEl);
+    roomConEl = document.createElement('div') as HTMLDivElement;
+    roomConEl.classList.add('room');
+    roomConEl.appendChild(label);
+    roomConEl.appendChild(roomImgsEl);
+    roomConEl.setAttribute('data-room-id', roomId);
+    roomConEl.setAttribute('style', `order:${roomId}`);
+
+    lobbyEl.appendChild(roomConEl);
   }
-  return roomEl;
+  return roomConEl as HTMLDivElement;
 }
 
 function addImgs(room_id: RoomId, img_id: ImgId) {
@@ -76,7 +80,9 @@ function addImgs(room_id: RoomId, img_id: ImgId) {
     return;
 
   // Add thumb image
-  addImg(room_id, img_id, roomEl as HTMLElement, true);
+  const roomImgsEl = roomEl.querySelector('.room-imgs');
+  if (!roomImgsEl) return;
+  addImg(room_id, img_id, roomImgsEl as HTMLElement, true);
 
   // Add big image
   //addImg(room_id, img_id, roomEl, false);
@@ -94,8 +100,7 @@ function addImg(
     : web_img_manager.img_src(lobby_id, room_id, img_id);
   imgEl.setAttribute('data-img-id', img_id.toString());
   imgEl.setAttribute('style', 'max-width: 100%');
-  roomEl.append(imgEl);
-  roomEl.append(imgEl);
+  roomEl.prepend(imgEl);
 }
 
 function removeImgs(room_id: RoomId, img_id: ImgId) {

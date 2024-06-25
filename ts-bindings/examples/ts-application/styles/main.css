@@ -18,12 +18,17 @@ body {
   grid-column: 1;
   grid-row: 2 / 4;
   overflow: scroll;
+  display: flex;
+  flex-direction: column;
 }
 
 .room {
+  margin: 5px;
+}
+
+.room-imgs {
   border: solid 1px aliceblue;
   background-color: gray;
-  margin: 5px;
 }
 
 #chat-messages {

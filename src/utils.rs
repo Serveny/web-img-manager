@@ -6,7 +6,6 @@ use image_hasher::{HashAlg, HasherConfig, ImageHash};
 use log::info;
 use serde_json::{from_value, Value};
 use std::{
-    cmp::Reverse,
     collections::HashMap,
     fs::{self, create_dir_all, DirEntry, File},
     io::{BufReader, Error, Read},
@@ -165,7 +164,7 @@ pub fn get_filenames_as_img_id(folder_path: &PathBuf) -> std::io::Result<Vec<Img
     let mut entries: Vec<(ImgId, SystemTime)> = fs::read_dir(folder_path)?
         .filter_map(entry_to_img_id)
         .collect();
-    entries.sort_by_key(|(_, time)| Reverse(*time));
+    entries.sort_by_key(|(_, time)| *time);
     Ok(entries.into_iter().map(|(id, _)| id).collect())
 }
 
