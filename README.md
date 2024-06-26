@@ -16,7 +16,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📰 upload live notification
 - [x] 📰 delete lobby/room/image live notification
 - [x] 💬 live chat
-- [x] 🔗 TS bindins for public messages
+- [x] 🔗 TS bindings for public messages (Easy to implement in any TypeScript project via npm: https://www.npmjs.com/package/web-img-manager)
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
 ## Examples
