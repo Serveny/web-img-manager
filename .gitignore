@@ -3,4 +3,4 @@
 .DS_Store
 /cert/
 
-/config/server-config.json
+/config/server-config*
