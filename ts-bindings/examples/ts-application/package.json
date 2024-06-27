@@ -9,6 +9,8 @@
     "dev-server": "cd ../../../ && cargo run"
   },
   "dependencies": {
+    "@picocss/pico": "^2.0.6",
+    "sass": "^1.77.6",
     "web-img-manager": "file:../../"
   },
   "devDependencies": {
@@ -20,5 +22,5 @@
     "type-script"
   ],
   "author": "Serveny",
-  "license": "ISC"
+  "license": "MIT"
 }

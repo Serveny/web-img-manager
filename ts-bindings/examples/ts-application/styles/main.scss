@@ -1,0 +1,43 @@
+@use '@picocss/pico';
+
+body {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  align-items: stretch;
+}
+
+/*
+ * Images container
+ */
+
+#img-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#control-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+#lobby {
+  overflow-y: auto;
+  height: 100%;
+}
+
+/*
+ * Live chat 
+ */
+
+#chat {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 400px;
+}
+
+#chat-messages {
+  height: 100%;
+}

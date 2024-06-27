@@ -51,24 +51,24 @@ async function addRoomImgsToHtml(room_id: RoomId) {
 }
 
 function getOrInsertRoomEl(room_id: RoomId): HTMLDivElement {
-  let roomConEl = lobbyEl.querySelector(`div[data-room-id='${room_id}']`);
+  let roomConEl = lobbyEl.querySelector(`details[data-room-id='${room_id}']`);
   if (!roomConEl) {
-    const roomImgsEl = document.createElement('div') as HTMLDivElement;
+    const roomImgsEl = document.createElement('p');
     const roomId = room_id.toString();
     roomImgsEl.setAttribute('data-room-id', roomId);
     roomImgsEl.className = 'room-imgs';
-    const label = document.createElement('label');
-    label.htmlFor = roomId;
+    const label = document.createElement('summary');
     label.textContent =
       document.querySelector(`#room-select option[value="${roomId}"`)
         ?.textContent ?? '';
 
-    roomConEl = document.createElement('div') as HTMLDivElement;
+    roomConEl = document.createElement('details');
     roomConEl.classList.add('room');
     roomConEl.appendChild(label);
     roomConEl.appendChild(roomImgsEl);
     roomConEl.setAttribute('data-room-id', roomId);
     roomConEl.setAttribute('style', `order:${roomId}`);
+    roomConEl.setAttribute('open', '');
 
     lobbyEl.appendChild(roomConEl);
   }
