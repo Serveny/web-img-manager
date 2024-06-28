@@ -16,7 +16,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📰 upload live notification
 - [x] 📰 delete lobby/room/image live notification
 - [x] 💬 live chat
-- [x] 🔗 TS bindings for public messages (Easy to implement in any TypeScript project via npm: https://www.npmjs.com/package/web-img-manager)
+- [x] 🔗 TS bindings for public messages 
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
 ## Examples
@@ -54,14 +54,20 @@ Little project to up and download image files to/from an actix rust server and g
    `"key_pem_path": "/wim-storage/cert/key.pem",`</code>
 5. (Re)start server
 
+## TypeScript-Bindings
+If you want to make the API calls via TypeScript, there is an NPM project with all calls and notification events: <br>
+https://www.npmjs.com/package/web-img-manager <br><br>
+To see how you can implement this, take a look at the example: <br>
+https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-application
+
 ## API
 
 #### Types
 
 - `lobby_id`: Uuid v4
-- `room_id`: Uuid v4
+- `room_id`: 32 bit Integer
 - `session_id`: Uuid v4
-- `img_id`: 32 bit Integer
+- `img_id`: 32 bit Integer (Image block hash)
 - `Permission`: Object
   - `url_whitelist`: Restrict access to urls. If None, every url is allowed
   - `restriction`: Rescriction enum
