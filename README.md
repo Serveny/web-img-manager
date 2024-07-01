@@ -140,9 +140,9 @@ https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-app
     <th colspan="6"><br>Admin requests</th>
   </tr>
  <tr>
-    <td>delete room / lobby / img</td>
+    <td>delete lobby or room or img</td>
     <td>POST</td>
-    <td><code>/delete/{lobby_id?}/{room_id?}/{img_id?}</code></td>
+    <td><code>/delete/{lobby_id}/{room_id?}/{img_id?}</code></td>
     <td>None</td>
     <td>JSON</td>
     <td>null</td>
