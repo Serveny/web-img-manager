@@ -23,19 +23,19 @@ openssl = ["dep:openssl", "actix-web/openssl"]
 [dependencies]
 actix = "0.13"
 actix-web = { version = "4"}
-actix-web-actors = "4.2"
+actix-web-actors = "4.3"
 actix-cors = "0.7"
 sanitize-filename = "0.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 base64 = "0.22"
 image = "0.25"
-uuid = { version = "1.6", features = ["v4", "serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
 log = "0.4"
 env_logger = "0.11"
 regex = "1"
 rand = "0.8"
-actix-multipart = "0.6.2"
+actix-multipart = "0.7.2"
 reqwest = { version = "0.12", features = ["json" ] }
 ts-rs = {version ="9", features = ["serde-compat", "uuid-impl"] }
 image_hasher = "2.0"
