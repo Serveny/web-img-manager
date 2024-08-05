@@ -7,8 +7,8 @@ use crate::{
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
-        get_filenames_as_img_id, get_foldernames_as_uuid, get_img, img_id_to_filename, read_img,
-        resize_image, save_img, ImgType,
+        check_image, delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img,
+        read_img, resize_image, save_img, ImgType, SaveImageResult,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -142,15 +142,33 @@ pub async fn upload_img(
 
     // Save images
     let img_id = match save_img(
-        img,
-        thumb_img,
+        &img,
+        &thumb_img,
         &lobby_id,
         &room_id,
         &cfg.images_storage_path,
     ) {
-        Ok(id) => id,
-        Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
+        SaveImageResult::Ok(id) => id,
+        SaveImageResult::ImageAlreadyExists(img_id) => {
+            return HttpResponse::Ok()
+                .insert_header((header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
+                .json(UploadResult { img_id })
+        }
+        SaveImageResult::Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
+
+    // After upload check (TODO: Make this check async after response)
+    if let Some(check) = &cfg.after_upload_check {
+        match check_image(&check.url, thumb_img).await {
+            Ok(is_allowed) if !is_allowed => {
+                debug!("Img {img_id} not allowed");
+                delete_img_files((lobby_id, room_id, img_id), &cfg.images_storage_path);
+                return HttpResponse::Forbidden().body("NSFW image detected");
+            }
+            Ok(_) => debug!("Img {img_id} allowed"),
+            Err(err) => debug!("{err}"),
+        };
+    }
 
     // Notify users
     notify
@@ -245,18 +263,7 @@ pub async fn delete_img(
         return err;
     }
 
-    let room_path = Path::new(&cfg.images_storage_path)
-        .join(lobby_id.to_string())
-        .join(room_id.to_string());
-    let filename = img_id_to_filename(img_id);
-
-    // Delete big image
-    let img_path = room_path.join(&filename);
-    fs::remove_file(img_path).unwrap_or_default();
-
-    // Delete thumb image
-    let thumb_path = room_path.join("thumb").join(filename);
-    fs::remove_file(thumb_path).unwrap_or_default();
+    delete_img_files((lobby_id, room_id, img_id), &cfg.images_storage_path);
 
     // Notify users
     notify

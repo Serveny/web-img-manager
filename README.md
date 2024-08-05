@@ -16,7 +16,7 @@ Little project to up and download image files to/from an actix rust server and g
 - [x] 📰 upload live notification
 - [x] 📰 delete lobby/room/image live notification
 - [x] 💬 live chat
-- [x] 🔗 TS bindings for public messages 
+- [x] 🔗 TS bindings for public messages
 - [ ] 👁️ admin control panel (for image deletion & overview web socket connections)
 
 ## Examples
@@ -52,9 +52,10 @@ Little project to up and download image files to/from an actix rust server and g
 3. Upload files (F.e. in console by `nano /wim-storage/cert/cert.pem` and copying the content of your file inside by cache) and set configuration options in `server-config.json`: <br>
    `"cert_pem_path": "/wim-storage/cert/cert.pem",`<br>
    `"key_pem_path": "/wim-storage/cert/key.pem",`</code>
-5. (Re)start server
+4. (Re)start server
 
 ## TypeScript-Bindings
+
 If you want to make the API calls via TypeScript, there is an NPM project with all calls and notification events: <br>
 https://www.npmjs.com/package/web-img-manager <br><br>
 To see how you can implement this, take a look at the example: <br>
@@ -221,9 +222,14 @@ https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-app
     <td><code>20971520</code></td>
   </tr>
   <tr>
-    <td><code>upload</code></td>
-    <td>Permission for image upload</td>
-    <td><code>{ "restriction": "AllowedToAll" }</code></td>
+    <td><code>permissions</code></td>
+    <td>Permission for api calls</td>
+    <td><code>{ "get_room_list": "AllowedToAll", "upload": {"restriction": "NeedsConfirmation": {"url": "https://confirm.example/check", ...}}, ... }</code></td>
+  </tr>
+  <tr>
+    <td><code>after_upload_check</code></td>
+    <td>Request that sends image after upload to other server and deletes image if check is false</td>
+    <td><code>{ "url": "https://confirm.example/check" }</code></td>
   </tr>
 </table>
 

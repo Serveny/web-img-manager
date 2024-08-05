@@ -89,20 +89,43 @@ impl Restriction {
 }
 
 #[derive(Deserialize, Clone)]
+pub enum ConfirmationMethod {
+    Get,
+    Post,
+}
+
+#[derive(Deserialize, Clone)]
+pub enum ConfirmationFormat {
+    Json,
+    Form,
+}
+
+#[derive(Deserialize, Clone)]
 pub struct ConfirmationRequest {
     url: String,
+    method: ConfirmationMethod,
+    format: ConfirmationFormat,
     params: HashMap<String, Value>,
     headers: HashMap<String, String>,
 }
 
 impl ConfirmationRequest {
-    async fn is_allowed(&self, params: HashMap<String, Value>) -> Result<(), String> {
+    pub async fn is_allowed(&self, params: HashMap<String, Value>) -> Result<(), String> {
         let client = reqwest::Client::new();
 
-        let mut req = client.post(&self.url).headers(self.header_map()?);
-        if !params.is_empty() {
-            req = req.json(&params);
+        let mut req = match self.method {
+            ConfirmationMethod::Get => client.get(&self.url),
+            ConfirmationMethod::Post => client.post(&self.url),
         }
+        .headers(self.header_map()?);
+
+        if !params.is_empty() {
+            req = match self.format {
+                ConfirmationFormat::Json => req.json(&params),
+                ConfirmationFormat::Form => req.form(&params),
+            };
+        }
+
         let response = &req
             .headers(self.header_map()?)
             .send()

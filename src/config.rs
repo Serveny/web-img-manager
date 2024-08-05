@@ -28,6 +28,8 @@ pub struct ServerConfig {
     // Private key path for openssl
     #[cfg(feature = "openssl")]
     pub key_pem_path: Option<String>,
+
+    pub after_upload_check: Option<AfterUploadCheck>,
 }
 
 impl Default for ServerConfig {
@@ -44,6 +46,8 @@ impl Default for ServerConfig {
 
             #[cfg(feature = "openssl")]
             key_pem_path: Some(String::from("/wim_storage/cert/key.pem")),
+
+            after_upload_check: None,
         }
     }
 }
@@ -84,4 +88,9 @@ pub fn cors_cfg() -> Cors {
         .allow_any_origin()
         .supports_credentials()
         .max_age(3600)
+}
+
+#[derive(Deserialize, Clone)]
+pub struct AfterUploadCheck {
+    pub url: String,
 }

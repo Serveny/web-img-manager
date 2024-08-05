@@ -4,6 +4,7 @@ use actix_web::{http::header, HttpResponse};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use image_hasher::{HashAlg, HasherConfig, ImageHash};
 use log::info;
+use reqwest::multipart::Part;
 use serde_json::{from_value, Value};
 use std::{
     cmp::Reverse,
@@ -81,17 +82,23 @@ pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> Dynam
     img
 }
 
+pub enum SaveImageResult {
+    Ok(ImgId),
+    ImageAlreadyExists(ImgId),
+    Err(String),
+}
+
 pub fn save_img(
-    img: DynamicImage,
-    thumb_img: DynamicImage,
+    img: &DynamicImage,
+    thumb_img: &DynamicImage,
     lobby_id: &LobbyId,
     room_id: &RoomId,
     img_storage_path: &str,
-) -> Result<ImgId, String> {
+) -> SaveImageResult {
     // Check storage path
     let storage_path = Path::new(img_storage_path);
     if !storage_path.exists() {
-        return Err(format!("Storage not found: {img_storage_path}"));
+        return SaveImageResult::Err(format!("Storage not found: {img_storage_path}"));
     }
 
     // Check image folder
@@ -99,7 +106,7 @@ pub fn save_img(
         .join(lobby_id.to_string())
         .join(room_id.to_string());
     if !img_folder_path.exists() && create_dir_all(&img_folder_path).is_err() {
-        return Err(String::from("Could not create image folder"));
+        return SaveImageResult::Err(String::from("Could not create image folder"));
     }
 
     // Save big image
@@ -108,22 +115,22 @@ pub fn save_img(
             .hash_alg(HashAlg::Blockhash)
             .hash_size(8, 4)
             .to_hasher()
-            .hash_image(&img),
+            .hash_image(img),
     );
 
     let img_path = img_folder_path.join(img_id_to_filename(img_id));
     if img_path.exists() {
         info!("img_id {img_id} already exists, skip picture");
-        return Ok(img_id);
+        return SaveImageResult::ImageAlreadyExists(img_id);
     }
     if let Err(err) = img.to_rgb8().save_with_format(img_path, ImageFormat::Jpeg) {
-        return Err(err.to_string());
+        return SaveImageResult::Err(err.to_string());
     }
 
     // Check thumb folder
     let thumb_folder_path = img_folder_path.join("thumb");
     if !thumb_folder_path.exists() && create_dir_all(&thumb_folder_path).is_err() {
-        return Err(String::from("Could not create thumb folder"));
+        return SaveImageResult::Err(String::from("Could not create thumb folder"));
     }
 
     // Save thumb image
@@ -132,10 +139,10 @@ pub fn save_img(
         .to_rgb8()
         .save_with_format(thumb_img_path, ImageFormat::Jpeg)
     {
-        return Err(err.to_string());
+        return SaveImageResult::Err(err.to_string());
     }
 
-    Ok(img_id)
+    SaveImageResult::Ok(img_id)
 }
 
 fn entry_to_img_id(entry: Result<DirEntry, Error>) -> Option<(ImgId, SystemTime)> {
@@ -233,4 +240,31 @@ impl ParamTuple for (LobbyId, RoomId, ImgId) {
         rename_with_value(map, "room_id", self.1);
         rename_with_value(map, "img_id", self.2);
     }
+}
+
+pub async fn check_image(url: &str, img: DynamicImage) -> Result<bool, String> {
+    let part = Part::bytes(img.into_bytes());
+    let form = reqwest::multipart::Form::new().part("image", part);
+    let res = reqwest::Client::new()
+        .post(url)
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|err| format!("{err:?}"))?;
+    Ok(res.json::<bool>().await.map_err(|err| format!("{err:?}"))?)
+}
+
+pub fn delete_img_files(params: (LobbyId, RoomId, ImgId), images_storage_path: &str) {
+    let room_path = Path::new(images_storage_path)
+        .join(params.0.to_string())
+        .join(params.1.to_string());
+    let filename = img_id_to_filename(params.2);
+
+    // Delete big image
+    let img_path = room_path.join(&filename);
+    fs::remove_file(img_path).unwrap_or_default();
+
+    // Delete thumb image
+    let thumb_path = room_path.join("thumb").join(filename);
+    fs::remove_file(thumb_path).unwrap_or_default();
 }
