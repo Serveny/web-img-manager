@@ -159,7 +159,7 @@ pub async fn upload_img(
 
     // After upload check (TODO: Make this check async after response)
     if let Some(check) = &cfg.after_upload_check {
-        match check_image(&check.url, thumb_img).await {
+        match check_image(&check.url, thumb_img, img_id).await {
             Ok(is_allowed) if !is_allowed => {
                 debug!("Img {img_id} not allowed");
                 delete_img_files((lobby_id, room_id, img_id), &cfg.images_storage_path);

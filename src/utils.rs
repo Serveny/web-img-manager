@@ -10,7 +10,7 @@ use std::{
     cmp::Reverse,
     collections::HashMap,
     fs::{self, create_dir_all, DirEntry, File},
-    io::{BufReader, Error, Read},
+    io::{BufReader, Cursor, Error, Read},
     path::{Path, PathBuf},
     time::SystemTime,
 };
@@ -242,11 +242,25 @@ impl ParamTuple for (LobbyId, RoomId, ImgId) {
     }
 }
 
-pub async fn check_image(url: &str, img: DynamicImage) -> Result<bool, String> {
-    let part = Part::bytes(img.into_bytes());
-    let form = reqwest::multipart::Form::new().part("image", part);
+const MIME_STR: &str = "image/jpeg";
+
+pub async fn check_image(url: &str, img: DynamicImage, img_id: ImgId) -> Result<bool, String> {
+    let mut buf = Vec::new();
+    img.to_rgb8()
+        .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
+        .map_err(|err| format!("{err:?}"))?;
+    let content_len = buf.len();
+    let part = Part::bytes(buf)
+        .file_name(img_id_to_filename(img_id))
+        .mime_str(MIME_STR)
+        .map_err(|err| format!("{err:?}"))?;
+    let form = reqwest::multipart::Form::new()
+        .text("img_id", img_id.to_string())
+        .part("image", part);
     let res = reqwest::Client::new()
         .post(url)
+        .header("CONTENT_TYPE", "Multipart/form-data")
+        .header("CONTENT_LENGTH", content_len)
         .multipart(form)
         .send()
         .await
