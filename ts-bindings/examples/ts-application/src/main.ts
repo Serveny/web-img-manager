@@ -127,16 +127,16 @@ async function uploadImage() {
 
 async function deleteFirstImage() {
   const roomId = parseInt(roomSelect.value);
-  const firstImage =
-    getRoomElById(roomId)
-      ?.getElementsByTagName('img')[0]
-      .getAttribute('data-img-id') ?? '0';
+  const firstImage = getRoomElById(roomId)
+    ?.getElementsByTagName('img')?.[0]
+    .getAttribute('data-img-id');
   if (firstImage)
     web_img_manager.delete(lobby_id, roomId, parseInt(firstImage));
+  else console.info('No image found');
 }
 
 function getRoomElById(room_id: RoomId) {
-  return document.querySelector(`div[data-room-id='${room_id}']`);
+  return document.querySelector(`details[data-room-id='${room_id}']`);
 }
 
 function emtpyRoom(room_id: RoomId) {
