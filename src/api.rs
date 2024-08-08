@@ -1,4 +1,5 @@
 use crate::{
+    check::{ImgCheck, ImgChecker},
     config::ServerConfig,
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
@@ -7,8 +8,8 @@ use crate::{
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
-        check_image, delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img,
-        read_img, resize_image, save_img, ImgType, SaveImageResult,
+        delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img, read_img,
+        resize_image, save_img, ImgType, SaveImageResult,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -159,15 +160,16 @@ pub async fn upload_img(
 
     // After upload check (TODO: Make this check async after response)
     if let Some(check) = &cfg.after_upload_check {
-        match check_image(&check.url, thumb_img, img_id).await {
-            Ok(is_allowed) if !is_allowed => {
-                debug!("Img {img_id} not allowed");
-                delete_img_files((lobby_id, room_id, img_id), &cfg.images_storage_path);
-                return HttpResponse::Forbidden().body("NSFW image detected");
-            }
-            Ok(_) => debug!("Img {img_id} allowed"),
-            Err(err) => debug!("{err}"),
-        };
+        let addr = ImgChecker.start();
+
+        addr.do_send(ImgCheck::new(
+            check.url.clone(),
+            thumb_img,
+            lobby_id,
+            room_id,
+            img_id,
+            cfg.images_storage_path.clone(),
+        ));
     }
 
     // Notify users

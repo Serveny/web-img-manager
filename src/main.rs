@@ -15,6 +15,7 @@ use notification::server::NotifyServer;
 use uuid::Uuid;
 
 mod api;
+mod check;
 mod config;
 mod notification;
 mod permission;
