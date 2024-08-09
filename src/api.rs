@@ -161,7 +161,6 @@ pub async fn upload_img(
 
     // After upload check (TODO: Make this check async after response)
     if let Some(check) = &cfg.after_upload_check {
-        println!("===== Request wird gesendet");
         checker.do_send(ImgCheck::new(
             check.url.clone(),
             thumb_img,
@@ -170,7 +169,6 @@ pub async fn upload_img(
             img_id,
             cfg.images_storage_path.clone(),
         ));
-        println!("===== Mache weiter");
     }
 
     // Notify users
