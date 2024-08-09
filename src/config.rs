@@ -29,7 +29,7 @@ pub struct ServerConfig {
     #[cfg(feature = "openssl")]
     pub key_pem_path: Option<String>,
 
-    pub after_upload_check: Option<AfterUploadCheck>,
+    pub after_upload_check: Option<AfterUploadCheckCfg>,
 }
 
 impl Default for ServerConfig {
@@ -91,6 +91,6 @@ pub fn cors_cfg() -> Cors {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct AfterUploadCheck {
+pub struct AfterUploadCheckCfg {
     pub url: String,
 }

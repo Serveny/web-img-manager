@@ -9,6 +9,7 @@ use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
     get_room_list, handle_options, send_chat_message, test, upload_img,
 };
+use check::ImgChecker;
 use config::{cors_cfg, read_server_config, ServerConfig};
 use log::{error, info};
 use notification::server::NotifyServer;
@@ -47,6 +48,7 @@ async fn main() -> std::io::Result<()> {
 
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
+    let img_checker = Data::new(ImgChecker::new(notify_server.clone()).start());
 
     let res = HttpServer::new(move || {
         // json configuration
@@ -70,6 +72,10 @@ async fn main() -> std::io::Result<()> {
             // -------------
             .app_data(notify_server.clone())
             .service(notification::start_connection)
+            // -------------
+            // After upload check
+            // -------------
+            .app_data(img_checker.clone())
             // -------------
             // API
             // -------------

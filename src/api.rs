@@ -108,6 +108,7 @@ pub async fn upload_img(
     info: web::Path<(LobbyId, RoomId)>,
     form: MultipartForm<UploadRequest>,
     notify: Data<Addr<NotifyServer>>,
+    checker: Data<Addr<ImgChecker>>,
     cfg: Data<ServerConfig>,
     req: HttpRequest,
 ) -> impl Responder {
@@ -160,9 +161,8 @@ pub async fn upload_img(
 
     // After upload check (TODO: Make this check async after response)
     if let Some(check) = &cfg.after_upload_check {
-        let addr = ImgChecker.start();
-
-        addr.do_send(ImgCheck::new(
+        println!("===== Request wird gesendet");
+        checker.do_send(ImgCheck::new(
             check.url.clone(),
             thumb_img,
             lobby_id,
@@ -170,6 +170,7 @@ pub async fn upload_img(
             img_id,
             cfg.images_storage_path.clone(),
         ));
+        println!("===== Mache weiter");
     }
 
     // Notify users

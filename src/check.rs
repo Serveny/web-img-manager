@@ -1,10 +1,12 @@
 use crate::{
+    notification::{internal_messages::ImageDeleted, server::NotifyServer},
     utils::{delete_img_files, img_id_to_filename},
     ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
+use actix_web::web::Data;
 use image::{DynamicImage, ImageFormat};
-use log::debug;
+use log::{debug, warn};
 use reqwest::multipart::Part;
 use std::io::Cursor;
 
@@ -41,7 +43,16 @@ impl Message for ImgCheck {
     type Result = ();
 }
 
-pub struct ImgChecker;
+#[derive(Debug, Clone)]
+pub struct ImgChecker {
+    notify: Data<Addr<NotifyServer>>,
+}
+
+impl ImgChecker {
+    pub fn new(notify: Data<Addr<NotifyServer>>) -> Self {
+        Self { notify }
+    }
+}
 
 impl Actor for ImgChecker {
     type Context = Context<Self>;
@@ -51,6 +62,7 @@ impl Handler<ImgCheck> for ImgChecker {
     type Result = ();
 
     fn handle(&mut self, msg: ImgCheck, _ctx: &mut Self::Context) -> Self::Result {
+        let notify = self.notify.clone();
         tokio::spawn(async move {
             // Sende einen GET Request
             let res = check_image(&msg.url, msg.img, msg.img_id).await;
@@ -62,6 +74,11 @@ impl Handler<ImgCheck> for ImgChecker {
                         (msg.lobby_id, msg.room_id, msg.img_id),
                         &msg.images_storage_path,
                     );
+                    notify
+                        .clone()
+                        .send(ImageDeleted::new(msg.lobby_id, msg.room_id, msg.img_id))
+                        .await
+                        .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
                 }
                 Ok(_) => debug!("Img {} allowed", msg.img_id),
                 Err(err) => debug!("{err}"),
