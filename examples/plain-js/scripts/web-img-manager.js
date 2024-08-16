@@ -205,7 +205,7 @@ async function send(url, method, params) {
   return fetch(url, {
     method: method,
     headers: {
-      'content-Type': 'application/json',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   }).then((response) => {

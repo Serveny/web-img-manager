@@ -1,6 +1,6 @@
-use crate::{ImgId, LobbyId, RoomId};
+use crate::{ImgId, LobbyId, RoomId, SessionId};
 use actix_multipart::form::tempfile::TempFile;
-use actix_web::{http::header, HttpResponse};
+use actix_web::{http::header, HttpRequest, HttpResponse};
 use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
 use image_hasher::{HashAlg, HasherConfig, ImageHash};
 use log::info;
@@ -254,4 +254,11 @@ pub fn delete_img_files(params: (LobbyId, RoomId, ImgId), images_storage_path: &
     // Delete thumb image
     let thumb_path = room_path.join("thumb").join(filename);
     fs::remove_file(thumb_path).unwrap_or_default();
+}
+
+pub const SESSION_COOKIE_NAME: &str = "wim_session_id";
+
+pub fn get_session_id(req: &HttpRequest) -> Option<SessionId> {
+    req.cookie(SESSION_COOKIE_NAME)
+        .and_then(|cookie| SessionId::parse_str(cookie.value()).ok())
 }

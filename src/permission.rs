@@ -8,7 +8,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use Restriction::*;
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Deserialize, Clone, Default, Debug)]
 pub struct Permissions {
     pub get_room_list: Permission,
     pub get_room_img_list: Permission,
@@ -21,7 +21,7 @@ pub struct Permissions {
     pub send_chat_message: Permission,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Permission {
     restriction: Restriction,
     url_whitelist: Option<Vec<String>>,
@@ -71,7 +71,7 @@ impl Default for Permission {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum Restriction {
     AllowedToAll,
     NeedsConfirmation(ConfirmationRequest),
@@ -88,19 +88,19 @@ impl Restriction {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum ConfirmationMethod {
     Get,
     Post,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum ConfirmationFormat {
     Json,
     Form,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ConfirmationRequest {
     url: String,
     method: ConfirmationMethod,

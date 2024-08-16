@@ -229,7 +229,7 @@ https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-app
   <tr>
     <td><code>after_upload_check</code></td>
     <td>Request that sends image after upload to other server and deletes image if check is false</td>
-    <td><code>{ "url": "https://confirm.example/check" }</code></td>
+    <td><code>{ "url": "https://confirm.example/check", "not_allowed_msg": "This image is not allowed" }</code></td>
   </tr>
 </table>
 

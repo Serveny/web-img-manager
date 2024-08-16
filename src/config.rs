@@ -4,7 +4,7 @@ use actix_web::http::header;
 use serde::Deserialize;
 use std::{env::current_dir, fs};
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ServerConfig {
     // server url
     pub url: String,
@@ -90,7 +90,8 @@ pub fn cors_cfg() -> Cors {
         .max_age(3600)
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AfterUploadCheckCfg {
     pub url: String,
+    pub not_allowed_msg: Option<String>,
 }

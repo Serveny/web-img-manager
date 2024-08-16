@@ -24,6 +24,7 @@ function addNotifications(notify: Notifications) {
   notify.onLobbyDeleted((_) => emtpyLobby());
   notify.onRoomDeleted((ev) => emtpyRoom(ev.room_id));
   notify.onChatMessage((ev) => showChatMessage(ev.username, ev.msg));
+  notify.onSystemNotification((ev) => console.info(ev.msg_type, ev.msg));
 }
 
 function addButtonHandler() {

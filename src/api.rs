@@ -8,8 +8,8 @@ use crate::{
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{
-        delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img, read_img,
-        resize_image, save_img, ImgType, SaveImageResult,
+        delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img,
+        get_session_id, read_img, resize_image, save_img, ImgType, SaveImageResult,
     },
     ImgId, LobbyId, RoomId,
 };
@@ -159,15 +159,15 @@ pub async fn upload_img(
         SaveImageResult::Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
 
-    // After upload check (TODO: Make this check async after response)
-    if let Some(check) = &cfg.after_upload_check {
+    // After upload check
+    if cfg.after_upload_check.is_some() {
+        debug!("COOKIE: {:?}", get_session_id(&req));
         checker.do_send(ImgCheck::new(
-            check.url.clone(),
             thumb_img,
             lobby_id,
             room_id,
             img_id,
-            cfg.images_storage_path.clone(),
+            get_session_id(&req),
         ));
     }
 

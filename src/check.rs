@@ -1,7 +1,11 @@
 use crate::{
-    notification::{internal_messages::ImageDeleted, server::NotifyServer},
+    config::ServerConfig,
+    notification::{
+        internal_messages::{ImageDeleted, SystemNotification, SystemNotificationType},
+        server::NotifyServer,
+    },
     utils::{delete_img_files, img_id_to_filename},
-    ImgId, LobbyId, RoomId,
+    ImgId, LobbyId, RoomId, SessionId,
 };
 use actix::prelude::*;
 use actix_web::web::Data;
@@ -11,30 +15,27 @@ use reqwest::multipart::Part;
 use std::io::Cursor;
 
 pub struct ImgCheck {
-    url: String,
     img: DynamicImage,
     lobby_id: LobbyId,
     room_id: RoomId,
     img_id: ImgId,
-    images_storage_path: String,
+    uploader_id: Option<SessionId>,
 }
 
 impl ImgCheck {
     pub fn new(
-        url: String,
         img: DynamicImage,
         lobby_id: LobbyId,
         room_id: RoomId,
         img_id: ImgId,
-        images_storage_path: String,
+        uploader_id: Option<SessionId>,
     ) -> Self {
         Self {
-            url,
             img,
             lobby_id,
             room_id,
             img_id,
-            images_storage_path,
+            uploader_id,
         }
     }
 }
@@ -46,11 +47,12 @@ impl Message for ImgCheck {
 #[derive(Debug, Clone)]
 pub struct ImgChecker {
     notify: Data<Addr<NotifyServer>>,
+    cfg: Data<ServerConfig>,
 }
 
 impl ImgChecker {
-    pub fn new(notify: Data<Addr<NotifyServer>>) -> Self {
-        Self { notify }
+    pub fn new(notify: Data<Addr<NotifyServer>>, cfg: Data<ServerConfig>) -> Self {
+        Self { notify, cfg }
     }
 }
 
@@ -63,22 +65,37 @@ impl Handler<ImgCheck> for ImgChecker {
 
     fn handle(&mut self, msg: ImgCheck, _ctx: &mut Self::Context) -> Self::Result {
         let notify = self.notify.clone();
+        let cfg = self.cfg.clone();
         tokio::spawn(async move {
+            let Some(check) = &cfg.after_upload_check else {
+                return;
+            };
             // Sende einen GET Request
-            let res = check_image(&msg.url, msg.img, msg.img_id).await;
+            let res = check_image(&check.url, msg.img, msg.img_id).await;
 
             match res {
                 Ok(is_allowed) if !is_allowed => {
                     debug!("Img {} not allowed", msg.img_id);
                     delete_img_files(
                         (msg.lobby_id, msg.room_id, msg.img_id),
-                        &msg.images_storage_path,
+                        &cfg.images_storage_path,
                     );
                     notify
-                        .clone()
                         .send(ImageDeleted::new(msg.lobby_id, msg.room_id, msg.img_id))
                         .await
                         .unwrap_or_else(|err| warn!("Can't notify users: {}", err));
+                    if let (Some(fail_msg), Some(uploader_id)) =
+                        (check.not_allowed_msg.clone(), msg.uploader_id)
+                    {
+                        notify
+                            .send(SystemNotification::new(
+                                uploader_id,
+                                fail_msg,
+                                SystemNotificationType::Warning,
+                            ))
+                            .await
+                            .unwrap_or_else(|err| warn!("Can't notify uploader: {}", err));
+                    }
                 }
                 Ok(_) => debug!("Img {} allowed", msg.img_id),
                 Err(err) => debug!("{err}"),

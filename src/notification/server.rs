@@ -1,6 +1,6 @@
 use super::internal_messages::{
     ChatMessage, Connect, Disconnect, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted,
-    WsMessage,
+    SystemNotification, WsMessage,
 };
 use crate::{utils::ToOutputJsonString, LobbyId};
 use actix::prelude::*;
@@ -31,11 +31,11 @@ impl NotifyServer {
             return;
         };
         for session_id in lobby {
-            self.send_string(session_id, msg);
+            self.send_msg_to_user(session_id, msg);
         }
     }
 
-    fn send_string(&self, session_id: &SessionId, msg: &str) {
+    fn send_msg_to_user(&self, session_id: &SessionId, msg: &str) {
         match self.sessions.get(session_id) {
             Some(socket_recipient) => socket_recipient.do_send(WsMessage(msg.to_string())),
             None => warn!("Can't find socket recipient: {}", session_id),
@@ -155,5 +155,17 @@ impl Handler<ChatMessage> for NotifyServer {
             return;
         };
         self.send_msg_to_lobby(&msg.lobby_id, &msg_json);
+    }
+}
+
+impl Handler<SystemNotification> for NotifyServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: SystemNotification, _: &mut Context<Self>) -> Self::Result {
+        let Ok(msg_json) = msg.to_output_json_string() else {
+            warn!("Can't parse chat message event to json");
+            return;
+        };
+        self.send_msg_to_user(&msg.session_id, &msg_json);
     }
 }

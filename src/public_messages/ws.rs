@@ -37,3 +37,11 @@ pub struct ChatMessageEvent<'a> {
     pub username: &'a str,
     pub msg: &'a str,
 }
+
+#[derive(Serialize, TS)]
+#[ts(export)]
+pub struct SystemNotificationEvent<'a> {
+    pub event: &'static str,
+    pub msg: &'a str,
+    pub msg_type: &'a str,
+}

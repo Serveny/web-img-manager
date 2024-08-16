@@ -8,6 +8,7 @@ import { Success, UploadResult } from './rs-bindings';
  */
 
 export type LobbyId = string;
+export type SessionId = string;
 export type RoomId = number;
 export type ImgId = number;
 export type Protocol = 'http' | 'https';
@@ -22,7 +23,7 @@ export class WebImgManager {
     lobby_id: LobbyId,
     room_id: RoomId
   ): Promise<ImgId[]> {
-    return send(
+    return this.send(
       `${this.protocol}://${this.server_addr}/list/${lobby_id}/${room_id}`,
       'GET'
     );
@@ -62,12 +63,12 @@ export class WebImgManager {
     let url = `${this.protocol}://${this.server_addr}/delete/${lobby_id}`;
     if (room_id != null) url += `/${room_id}`;
     if (room_id != null && img_id != null) url += `/${img_id}`;
-    return send(url, 'POST');
+    return this.send(url, 'POST');
   }
 
   async sendChatMessage(lobby_id: LobbyId, msg: string): Promise<Success> {
     let url = `${this.protocol}://${this.server_addr}/chat`;
-    return send(url, 'POST', { lobby_id, msg });
+    return this.send(url, 'POST', { lobby_id, msg });
   }
 
   connect(
@@ -81,28 +82,28 @@ export class WebImgManager {
     );
     return this;
   }
-}
 
-async function send<TRes>(
-  url: string,
-  method: string,
-  params?: object
-): Promise<TRes> {
-  const response = await fetch(url, {
-    method: method,
-    headers: {
-      'content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  });
+  private async send<TRes>(
+    url: string,
+    method: string,
+    params?: object
+  ): Promise<TRes> {
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
 
-  if (response.ok !== true) {
-    throw new Error(
-      `Response error: ${response.status} - ${
-        response.statusText
-      } - ${await response.text()}`
-    );
+    if (response.ok !== true) {
+      throw new Error(
+        `Response error: ${response.status} - ${
+          response.statusText
+        } - ${await response.text()}`
+      );
+    }
+
+    return response.json();
   }
-
-  return response.json();
 }

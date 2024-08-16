@@ -4,6 +4,7 @@ import {
   ImageProcessedEvent,
   LobbyDeletedEvent,
   RoomDeletedEvent,
+  SystemNotificationEvent,
 } from './rs-bindings';
 import { LobbyId } from './web-img-manager';
 
@@ -52,22 +53,26 @@ export class Notifications {
   }
 
   onImageUploaded(handler: (ev: ImageProcessedEvent) => void) {
-    this.emitter.on('ImageUploaded', handler as any);
+    this.emitter.on('ImageUploaded', handler);
   }
 
   onLobbyDeleted(handler: (ev: LobbyDeletedEvent) => void) {
-    this.emitter.on('LobbyDeleted', handler as any);
+    this.emitter.on('LobbyDeleted', handler);
   }
 
   onRoomDeleted(handler: (ev: RoomDeletedEvent) => void) {
-    this.emitter.on('RoomDeleted', handler as any);
+    this.emitter.on('RoomDeleted', handler);
   }
 
   onImageDeleted(handler: (ev: ImageProcessedEvent) => void) {
-    this.emitter.on('ImageDeleted', handler as any);
+    this.emitter.on('ImageDeleted', handler);
   }
 
   onChatMessage(handler: (ev: ChatMessageEvent) => void) {
     this.emitter.on('ChatMessage', handler as any);
+  }
+
+  onSystemNotification(handler: (ev: SystemNotificationEvent) => void) {
+    this.emitter.on('SystemNotification', handler);
   }
 }

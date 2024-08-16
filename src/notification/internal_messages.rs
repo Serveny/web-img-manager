@@ -1,12 +1,15 @@
+use crate::SessionId;
 use crate::{
     public_messages::ws::{
         ChatMessageEvent, ConnectEvent, ImageProcessedEvent, LobbyDeletedEvent, RoomDeletedEvent,
+        SystemNotificationEvent,
     },
     utils::ToOutputJsonString,
-    ImgId, LobbyId, RoomId, SessionId,
+    ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
 use serde_json::Error;
+use std::fmt;
 
 // WsConn responds to this to pipe it through to the actual client
 #[derive(Message)]
@@ -162,6 +165,45 @@ impl ToOutputJsonString for ChatMessage {
             event: "ChatMessage",
             username: &self.username,
             msg: &self.msg,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SystemNotificationType {
+    Warning,
+}
+
+impl fmt::Display for SystemNotificationType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SystemNotification {
+    pub session_id: SessionId,
+    pub msg: String,
+    pub msg_type: SystemNotificationType,
+}
+
+impl SystemNotification {
+    pub fn new(session_id: SessionId, msg: String, msg_type: SystemNotificationType) -> Self {
+        Self {
+            session_id,
+            msg,
+            msg_type,
+        }
+    }
+}
+
+impl ToOutputJsonString for SystemNotification {
+    fn to_output_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&SystemNotificationEvent {
+            event: "SystemNotification",
+            msg: &self.msg,
+            msg_type: &self.msg_type.to_string(),
         })
     }
 }

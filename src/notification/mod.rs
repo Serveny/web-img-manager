@@ -1,6 +1,7 @@
-use crate::{LobbyId, SessionId};
+use crate::{utils::SESSION_COOKIE_NAME, LobbyId, SessionId};
 use actix::prelude::*;
 use actix_web::{
+    cookie::{Cookie, SameSite},
     get,
     web::{Data, Path, Payload},
     Error, HttpRequest, HttpResponse,
@@ -27,7 +28,19 @@ pub async fn start_connection(
     srv: Data<Addr<NotifyServer>>,
 ) -> Result<HttpResponse, Error> {
     let ws = WsConn::new(path.0, srv.get_ref().clone());
-    ws::start(ws, &req, stream)
+    let session_id = ws.session_id.to_string();
+    let mut res = ws::start(ws, &req, stream)?;
+
+    let cookie = Cookie::build(SESSION_COOKIE_NAME, format!("{session_id}; Partitioned"))
+        .path("/")
+        .http_only(false)
+        .secure(true)
+        .same_site(SameSite::None)
+        .finish();
+
+    res.add_cookie(&cookie)?;
+
+    Ok(res)
 }
 
 pub struct WsConn {

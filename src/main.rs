@@ -34,10 +34,10 @@ pub type ImgId = u32;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
-    let server_cfg: ServerConfig = read_server_config().unwrap_or_else(|err| {
+    let server_cfg: Data<ServerConfig> = Data::new(read_server_config().unwrap_or_else(|err| {
         error!("{err}. Using hardcoded default config instead");
         ServerConfig::default()
-    });
+    }));
     let server = (server_cfg.url.clone(), server_cfg.port);
 
     #[cfg(feature = "openssl")]
@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
 
     // Live notifications server
     let notify_server = Data::new(NotifyServer::new().start());
-    let img_checker = Data::new(ImgChecker::new(notify_server.clone()).start());
+    let img_checker = Data::new(ImgChecker::new(notify_server.clone(), server_cfg.clone()).start());
 
     let res = HttpServer::new(move || {
         // json configuration
@@ -66,7 +66,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(cors_cfg())
             .app_data(json_cfg)
-            .app_data(Data::new(server_cfg.clone()))
+            .app_data(server_cfg.clone())
             // -------------
             // Notifications
             // -------------
