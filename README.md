@@ -74,9 +74,18 @@ https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-app
   - `restriction`: Rescriction enum
 - `Restriction`: Choose one option <ul>
   <li><code>AllowedToAll</code>: Allow access from anywhere by anyone</li>
-  <li><code>NeedsConfimation</code>: Allow access after sending serverside confirmation request `"NeedsConfimation": {url: string, params: {string, any}, headers: {string, string} }`</li>
+  <li>
+    <code>NeedsConfimation</code>: Allow access after sending serverside confirmation request <br>
+    <b>Configuration option:</b><code>"NeedsConfimation": {url: string, params: {string, any}, headers: {string, string} }</code><br>
+    <b>Request to the confirmation server:</b> Request to configured url with params and headers<br>
+    <b>Expected response of the confirmation server:</b> <code>{
+    is_allowed: boolean,
+    error_msg?: String 
+  }</code></li>
   <li><code>Denied</code>: Deny access</li>
 </ul>
+
+If you configure `lobby_id`, `room_id` or `img_id` as request params, they get filled with the right ids automaticly inside the request. Every other string will be sended unchanged to the configured url.
 
 #### Public requests
 
