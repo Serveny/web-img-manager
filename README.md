@@ -85,7 +85,9 @@ https://github.com/Serveny/web-img-manager/tree/main/ts-bindings/examples/ts-app
   <li><code>Denied</code>: Deny access</li>
 </ul>
 
-If you configure `lobby_id`, `room_id` or `img_id` as request params, they get filled with the right ids automaticly inside the request. Every other string will be sended unchanged to the configured url.
+#### Predefined parameters
+
+If you configure `lobby_id`, `room_id` or `img_id` as request params, they get filled with the right ids automaticly inside the request. Every other parameter will be sended unchanged to the configured url. Also the name of the predefined parameters are changeable. For example, the configuration `"lobby_id": "YourNamedId"` will produce a request param `YourNamedId: "be84c114-2431-4e21-aa40-2d831f23be92"` <-- The guid here is an example for a lobby_id.
 
 #### Public requests
 
