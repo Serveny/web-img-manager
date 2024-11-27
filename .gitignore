@@ -4,3 +4,4 @@
 /cert/
 
 /config/server-config*
+package-lock.json

@@ -1,6 +1,6 @@
 use crate::{
-    check::{ImgCheck, ImgChecker},
-    config::ServerConfig,
+    check::{check_image, ImgCheck, ImgChecker},
+    config::{CheckPhase, ServerConfig},
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
@@ -142,6 +142,28 @@ pub async fn upload_img(
     let img = resize_image(img, 4000, 2000);
     let thumb_img = resize_image(img.clone(), 600, 200);
 
+    // At upload check
+    if let Some(check) = &cfg.upload_check {
+        if check.check_phase == CheckPhase::BeforeUpload {
+            match check_image(&check.url, thumb_img.clone(), None).await {
+                Ok(is_allowed) => {
+                    if !is_allowed {
+                        return HttpResponse::Forbidden().body(
+                            check
+                                .not_allowed_msg
+                                .as_ref()
+                                .map_or("This image is not allowed".into(), |msg| msg.clone()),
+                        );
+                    }
+                }
+                Err(err_msg) => {
+                    return HttpResponse::InternalServerError()
+                        .body(format!("Upload check failed: {err_msg}"))
+                }
+            }
+        }
+    }
+
     // Save images
     let img_id = match save_img(
         &img,
@@ -160,15 +182,16 @@ pub async fn upload_img(
     };
 
     // After upload check
-    if cfg.after_upload_check.is_some() {
-        debug!("COOKIE: {:?}", get_session_id(&req));
-        checker.do_send(ImgCheck::new(
-            thumb_img,
-            lobby_id,
-            room_id,
-            img_id,
-            get_session_id(&req),
-        ));
+    if let Some(check) = &cfg.upload_check {
+        if check.check_phase == CheckPhase::AfterUpload {
+            checker.do_send(ImgCheck::new(
+                thumb_img,
+                lobby_id,
+                room_id,
+                img_id,
+                get_session_id(&req),
+            ));
+        }
     }
 
     // Notify users

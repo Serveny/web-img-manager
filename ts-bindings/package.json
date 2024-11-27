@@ -8,8 +8,8 @@
     "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/ && tsc"
   },
   "devDependencies": {
-    "typescript": "^5.4",
-    "vite": "5.3"
+    "typescript": "5.7.2",
+    "vite": "6.0.1"
   },
   "keywords": [
     "bindings",

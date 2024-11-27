@@ -20,7 +20,7 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Entry point for our websocket route
-#[get("/ws/{lobby_id}")]
+#[get("/notifications/{lobby_id}")]
 pub async fn start_connection(
     req: HttpRequest,
     path: Path<(LobbyId,)>,

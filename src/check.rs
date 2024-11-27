@@ -67,11 +67,11 @@ impl Handler<ImgCheck> for ImgChecker {
         let notify = self.notify.clone();
         let cfg = self.cfg.clone();
         tokio::spawn(async move {
-            let Some(check) = &cfg.after_upload_check else {
+            let Some(check) = &cfg.upload_check else {
                 return;
             };
             // Sende einen GET Request
-            let res = check_image(&check.url, msg.img, msg.img_id).await;
+            let res = check_image(&check.url, msg.img, Some(msg.img_id)).await;
 
             match res {
                 Ok(is_allowed) if !is_allowed => {
@@ -106,12 +106,17 @@ impl Handler<ImgCheck> for ImgChecker {
 
 const MIME_STR: &str = "image/jpeg";
 
-pub async fn check_image(url: &str, img: DynamicImage, img_id: ImgId) -> Result<bool, String> {
+pub async fn check_image(
+    url: &str,
+    img: DynamicImage,
+    img_id: Option<ImgId>,
+) -> Result<bool, String> {
     let mut buf = Vec::new();
     img.to_rgb8()
         .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
         .map_err(|err| format!("{err:?}"))?;
     let content_len = buf.len();
+    let img_id = img_id.unwrap_or(0);
     let part = Part::bytes(buf)
         .file_name(img_id_to_filename(img_id))
         .mime_str(MIME_STR)

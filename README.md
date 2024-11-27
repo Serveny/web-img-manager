@@ -238,9 +238,9 @@ The configuration options `Restriction: NeedsConfimation` or `afterUploadCheck` 
     <td><code>{ "get_room_list": "AllowedToAll", "upload": {"restriction": "NeedsConfirmation": {"url": "https://confirm.example/check", ...}}, ... }</code></td>
   </tr>
   <tr>
-    <td><code>after_upload_check</code></td>
+    <td><code>upload_check</code></td>
     <td>Request that sends image after upload to other server and deletes image if check is false</td>
-    <td><code>{ "url": "https://confirm.example/check", "not_allowed_msg": "This image is not allowed" }</code></td>
+    <td><code>{ "url": "https://confirm.example/check", "not_allowed_msg": "This image is not allowed", check_phase: "BeforeUpload" | "AfterUpload" }</code></td>
   </tr>
 </table>
 

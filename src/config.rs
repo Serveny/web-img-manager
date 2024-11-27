@@ -29,7 +29,7 @@ pub struct ServerConfig {
     #[cfg(feature = "openssl")]
     pub key_pem_path: Option<String>,
 
-    pub after_upload_check: Option<AfterUploadCheckCfg>,
+    pub upload_check: Option<UploadCheckCfg>,
 }
 
 impl Default for ServerConfig {
@@ -47,7 +47,7 @@ impl Default for ServerConfig {
             #[cfg(feature = "openssl")]
             key_pem_path: Some(String::from("/wim_storage/cert/key.pem")),
 
-            after_upload_check: None,
+            upload_check: None,
         }
     }
 }
@@ -90,8 +90,15 @@ pub fn cors_cfg() -> Cors {
         .max_age(3600)
 }
 
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum CheckPhase {
+    BeforeUpload,
+    AfterUpload,
+}
+
 #[derive(Deserialize, Clone, Debug)]
-pub struct AfterUploadCheckCfg {
+pub struct UploadCheckCfg {
+    pub check_phase: CheckPhase,
     pub url: String,
     pub not_allowed_msg: Option<String>,
 }

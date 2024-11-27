@@ -19,7 +19,8 @@ export class Notifications {
     lobby_id: LobbyId,
     protocol: NotificationsProtocol = 'ws'
   ) {
-    const socket = new WebSocket(`${protocol}://${server_addr}/ws/${lobby_id}`);
+    const url = `${protocol}://${server_addr}/notifications/${lobby_id}`;
+    const socket = new WebSocket(url);
 
     // Declare Events
     socket.addEventListener('open', (event) => {
