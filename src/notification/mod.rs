@@ -6,11 +6,18 @@ use actix_web::{
     web::{Data, Path, Payload},
     Error, HttpRequest, HttpResponse,
 };
-use actix_web_actors::ws::{self};
-use internal_messages::{Connect, Disconnect, WsMessage};
-use log::debug;
+use actix_ws::AggregatedMessage;
+use futures_util::{
+    future::{select, Either},
+    StreamExt as _,
+};
+use internal_messages::{Connect, Disconnect};
 use server::NotifyServer;
-use std::time::{Duration, Instant};
+use std::{
+    pin::pin,
+    time::{Duration, Instant},
+};
+use tokio::{sync::mpsc, task::spawn_local, time::interval};
 use uuid::Uuid;
 
 pub mod internal_messages;
@@ -25,11 +32,19 @@ pub async fn start_connection(
     req: HttpRequest,
     path: Path<(LobbyId,)>,
     stream: Payload,
-    srv: Data<Addr<NotifyServer>>,
+    notify_server: Data<Addr<NotifyServer>>,
 ) -> Result<HttpResponse, Error> {
-    let ws = WsConn::new(path.0, srv.get_ref().clone());
-    let session_id = ws.session_id.to_string();
-    let mut res = ws::start(ws, &req, stream)?;
+    let (mut res, session, msg_stream) = actix_ws::handle(&req, stream)?;
+    let session_id: SessionId = Uuid::new_v4();
+
+    // spawn websocket handler (and don't await it) so that the response is returned immediately
+    spawn_local(chat_ws(
+        notify_server,
+        session,
+        msg_stream,
+        session_id,
+        path.0,
+    ));
 
     let cookie = Cookie::build(SESSION_COOKIE_NAME, format!("{session_id}; Partitioned"))
         .path("/")
@@ -43,97 +58,101 @@ pub async fn start_connection(
     Ok(res)
 }
 
-pub struct WsConn {
-    session_id: SessionId,
+/// Echo text & binary messages received from the client, respond to ping messages, and monitor
+/// connection health to detect network issues and free up resources.
+pub async fn chat_ws(
+    notify_server: Data<Addr<NotifyServer>>,
+    mut session: actix_ws::Session,
+    msg_stream: actix_ws::MessageStream,
+    session_id: Uuid,
     lobby_id: LobbyId,
-    hb: Instant,
-    lobby_addr: Addr<NotifyServer>,
-}
+) {
+    log::info!("connected");
 
-impl WsConn {
-    pub fn new(lobby_id: LobbyId, lobby: Addr<NotifyServer>) -> WsConn {
-        WsConn {
-            session_id: Uuid::new_v4(),
+    let mut last_heartbeat = Instant::now();
+    let mut interval = interval(HEARTBEAT_INTERVAL);
+
+    let (conn_tx, mut conn_rx) = mpsc::unbounded_channel();
+
+    // unwrap: chat server is not dropped before the HTTP server
+    notify_server
+        .send(Connect {
+            sender: conn_tx,
             lobby_id,
-            hb: Instant::now(),
-            lobby_addr: lobby,
-        }
-    }
+            session_id,
+        })
+        .await
+        .expect("Can connect");
 
-    fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                println!("Disconnecting failed heartbeat");
-                ctx.stop();
-                return;
-            }
+    let msg_stream = msg_stream
+        .max_frame_size(128 * 1024)
+        .aggregate_continuations()
+        .max_continuation_size(2 * 1024 * 1024);
 
-            ctx.ping(b"PING");
-        });
-    }
-}
+    let mut msg_stream = pin!(msg_stream);
 
-impl Actor for WsConn {
-    type Context = ws::WebsocketContext<Self>;
+    let close_reason = loop {
+        // most of the futures we process need to be stack-pinned to work with select()
 
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
+        let tick = pin!(interval.tick());
+        let msg_rx = pin!(conn_rx.recv());
 
-        let addr = ctx.address();
-        self.lobby_addr
-            .send(Connect {
-                addr: addr.recipient(),
-                lobby_id: self.lobby_id,
-                session_id: self.session_id,
-            })
-            .into_actor(self)
-            .then(|res, _, ctx| {
-                match res {
-                    Ok(_res) => (),
-                    _ => ctx.stop(),
+        // TODO: nested select is pretty gross for readability on the match
+        let messages = pin!(select(msg_stream.next(), msg_rx));
+
+        match select(messages, tick).await {
+            // messages received from client
+            Either::Left((Either::Left((Some(Ok(msg)), _)), _)) => match msg {
+                AggregatedMessage::Ping(bytes) => {
+                    last_heartbeat = Instant::now();
+                    session.pong(&bytes).await.unwrap();
                 }
-                fut::ready(())
-            })
-            .wait(ctx);
-    }
+                AggregatedMessage::Pong(_) => last_heartbeat = Instant::now(),
+                AggregatedMessage::Text(_text) => log::warn!("unexpected text message"),
+                AggregatedMessage::Binary(_bin) => log::warn!("unexpected binary message"),
+                AggregatedMessage::Close(reason) => break reason,
+            },
 
-    fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.lobby_addr.do_send(Disconnect {
-            session_id: self.session_id,
-        });
-        Running::Stop
-    }
-}
+            // client WebSocket stream error
+            Either::Left((Either::Left((Some(Err(err)), _)), _)) => {
+                log::error!("{}", err);
+                break None;
+            }
 
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            Ok(ws::Message::Pong(_)) => {
-                self.hb = Instant::now();
-            }
-            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
-            Ok(ws::Message::Close(reason)) => {
-                ctx.close(reason);
-                ctx.stop();
-            }
-            Ok(ws::Message::Continuation(_)) => {
-                ctx.stop();
-            }
-            Ok(ws::Message::Nop) => (),
-            Ok(ws::Message::Text(s)) => debug!("Text send: {}", s),
-            Err(e) => println!("{}", e),
-        }
-    }
-}
+            // client WebSocket stream ended
+            Either::Left((Either::Left((None, _)), _)) => break None,
 
-impl Handler<WsMessage> for WsConn {
-    type Result = ();
+            // chat messages received from other room participants
+            Either::Left((Either::Right((Some(chat_msg), _)), _)) => {
+                session.text(chat_msg).await.unwrap();
+            }
 
-    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
-    }
+            // all connection's message senders were dropped
+            Either::Left((Either::Right((None, _)), _)) => unreachable!(
+                "all connection message senders were dropped; chat server may have panicked"
+            ),
+
+            // heartbeat internal tick
+            Either::Right((_inst, _)) => {
+                // if no heartbeat ping/pong received recently, close the connection
+                if Instant::now().duration_since(last_heartbeat) > CLIENT_TIMEOUT {
+                    log::info!(
+                        "client has not sent heartbeat in over {CLIENT_TIMEOUT:?}; disconnecting"
+                    );
+                    break None;
+                }
+
+                // send heartbeat ping
+                let _ = session.ping(b"").await;
+            }
+        };
+    };
+
+    notify_server
+        .send(Disconnect::new(session_id))
+        .await
+        .expect("Can disconnect");
+
+    // attempt to close connection gracefully
+    let _ = session.close(close_reason).await;
 }

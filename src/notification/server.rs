@@ -1,18 +1,18 @@
 use super::internal_messages::{
     ChatMessage, Connect, Disconnect, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted,
-    SystemNotification, WsMessage,
+    SystemNotification,
 };
 use crate::{utils::ToOutputJsonString, LobbyId};
 use actix::prelude::*;
 use log::{debug, warn};
 use std::collections::{HashMap, HashSet};
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-type Socket = Recipient<WsMessage>;
 type SessionId = Uuid;
 
 pub struct NotifyServer {
-    sessions: HashMap<SessionId, Socket>,
+    sessions: HashMap<SessionId, UnboundedSender<String>>,
     lobbies: HashMap<LobbyId, HashSet<SessionId>>,
 }
 
@@ -37,7 +37,9 @@ impl NotifyServer {
 
     fn send_msg_to_user(&self, session_id: &SessionId, msg: &str) {
         match self.sessions.get(session_id) {
-            Some(socket_recipient) => socket_recipient.do_send(WsMessage(msg.to_string())),
+            Some(sender) => sender
+                .send(msg.to_string())
+                .expect("Message should be sent."),
             None => warn!("Can't find socket recipient: {}", session_id),
         }
     }
@@ -61,7 +63,7 @@ impl Handler<Connect> for NotifyServer {
         debug!("Lobbies: {:?}", self.lobbies);
 
         // store the address
-        self.sessions.insert(msg.session_id, msg.addr);
+        self.sessions.insert(msg.session_id, msg.sender);
     }
 }
 

@@ -10,17 +10,13 @@ use crate::{
 use actix::prelude::*;
 use serde_json::Error;
 use std::fmt;
-
-// WsConn responds to this to pipe it through to the actual client
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct WsMessage(pub String);
+use tokio::sync::mpsc::UnboundedSender;
 
 // WsConn sends this to the lobby to say "put me in please"
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Connect {
-    pub addr: Recipient<WsMessage>,
+    pub sender: UnboundedSender<String>,
     pub lobby_id: LobbyId,
     pub session_id: SessionId,
 }
@@ -39,6 +35,12 @@ impl ToOutputJsonString for Connect {
 #[rtype(result = "()")]
 pub struct Disconnect {
     pub session_id: SessionId,
+}
+
+impl Disconnect {
+    pub fn new(session_id: SessionId) -> Self {
+        Self { session_id }
+    }
 }
 
 // image was uploaded
