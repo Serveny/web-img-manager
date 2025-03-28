@@ -218,7 +218,6 @@ fn open_img<P: AsRef<Path>>(base_name: P) -> std::io::Result<(File, PathBuf)> {
 
     for ext in &extensions {
         let file_path = base_name.as_ref().with_extension(ext);
-        println!("FIlepath: {:?}", file_path);
         if file_path.exists() {
             return match File::open(&file_path) {
                 Ok(file) => Ok((file, file_path)),
