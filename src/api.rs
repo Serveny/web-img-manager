@@ -1,16 +1,17 @@
 use crate::{
     check::{check_image, ImgCheck, ImgChecker},
     config::{CheckPhase, ServerConfig},
+    img::{
+        delete_img_files, get_filenames_as_img_id, get_img, read_img, resize_image, save_img,
+        ImgType, SaveImageResult,
+    },
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
         server::NotifyServer,
     },
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
-    utils::{
-        delete_img_files, get_filenames_as_img_id, get_foldernames_as_uuid, get_img,
-        get_session_id, read_img, resize_image, save_img, ImgType, SaveImageResult,
-    },
+    utils::{get_foldernames_as_uuid, get_session_id},
     ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;

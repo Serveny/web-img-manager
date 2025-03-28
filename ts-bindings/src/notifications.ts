@@ -41,39 +41,48 @@ export class Notifications {
     });
   }
 
-  onConnected(handler: (ev: Event) => void) {
+  onConnected(handler: (ev: Event) => void): this {
     this.emitter.on('Connected', handler);
+    return this;
   }
 
-  onDisconnected(handler: (ev: Event) => void) {
+  onDisconnected(handler: (ev: Event) => void): this {
     this.emitter.on('Disonnected', handler);
+    return this;
   }
 
-  onError(handler: (ev: Event) => void) {
+  onError(handler: (ev: Event) => void): this {
     this.emitter.on('Error', handler);
+    return this;
   }
 
-  onImageUploaded(handler: (ev: ImageProcessedEvent) => void) {
+  onImageUploaded(handler: (ev: ImageProcessedEvent) => void): this {
     this.emitter.on('ImageUploaded', handler);
+    return this;
   }
 
-  onLobbyDeleted(handler: (ev: LobbyDeletedEvent) => void) {
+  onLobbyDeleted(handler: (ev: LobbyDeletedEvent) => void): this {
     this.emitter.on('LobbyDeleted', handler);
+    return this;
   }
 
-  onRoomDeleted(handler: (ev: RoomDeletedEvent) => void) {
+  onRoomDeleted(handler: (ev: RoomDeletedEvent) => void): this {
     this.emitter.on('RoomDeleted', handler);
+    return this;
   }
 
-  onImageDeleted(handler: (ev: ImageProcessedEvent) => void) {
+  onImageDeleted(handler: (ev: ImageProcessedEvent) => void): this {
     this.emitter.on('ImageDeleted', handler);
+    return this;
   }
 
-  onChatMessage(handler: (ev: ChatMessageEvent) => void) {
+  onChatMessage(handler: (ev: ChatMessageEvent) => void): this {
     this.emitter.on('ChatMessage', handler as any);
+    return this;
   }
 
-  onSystemNotification(handler: (ev: SystemNotificationEvent) => void) {
+  onSystemNotification(handler: (ev: SystemNotificationEvent) => void): this {
     this.emitter.on('SystemNotification', handler);
+    return this;
   }
 }

@@ -121,7 +121,7 @@ The configuration options `Restriction: NeedsConfimation` or `afterUploadCheck` 
     <td>GET</td>
     <td><code>/img/thumb/{lobby_id}/{room_id}/{img_id}</code></td>
     <td>None</td>
-    <td>.jpg</td>
+    <td>.webp</td>
     <td>thumb image file</td>
   </tr>
   <tr>
@@ -129,7 +129,7 @@ The configuration options `Restriction: NeedsConfimation` or `afterUploadCheck` 
     <td>GET</td>
     <td><code>/img/{lobby_id}/{room_id}/{img_id}</code></td>
     <td>None</td>
-    <td>.jpg</td>
+    <td>.webp</td>
     <td>image file</td>
   </tr>
   <tr>

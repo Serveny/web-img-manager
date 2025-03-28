@@ -5,11 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/ && tsc"
+    "generate-bindings": "cargo test && node ./combine-bindings.cjs && rimraf ./src/bindings/ && tsc",
+    "build": "tsc --build"
   },
   "devDependencies": {
-    "typescript": "5.7.3",
-    "vite": "6.1.0"
+    "typescript": "5.7.3"
   },
   "keywords": [
     "bindings",

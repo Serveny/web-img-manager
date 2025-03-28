@@ -1,10 +1,10 @@
 use crate::{
     config::ServerConfig,
+    img::{delete_img_files, img_id_to_filename},
     notification::{
         internal_messages::{ImageDeleted, SystemNotification, SystemNotificationType},
         server::NotifyServer,
     },
-    utils::{delete_img_files, img_id_to_filename},
     ImgId, LobbyId, RoomId, SessionId,
 };
 use actix::prelude::*;

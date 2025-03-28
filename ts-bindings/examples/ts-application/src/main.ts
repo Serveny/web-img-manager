@@ -1,31 +1,29 @@
-import { ImgId, Notifications, RoomId, WebImgManager } from 'web-img-manager';
+import { ImgId, RoomId, WebImgManager } from 'web-img-manager';
 
 const server_addr = '127.0.0.1:1871';
 const lobby_id = '6a766d31-71d5-4a34-8df5-124b9614b19f';
 const web_img_manager = new WebImgManager(server_addr, 'http');
-web_img_manager.connect(lobby_id, 'ws');
-const notify = web_img_manager.notifications;
-if (notify) addNotifications(notify);
-else console.warn('Notifications not available');
+const notifications = web_img_manager.connect(lobby_id, 'ws');
+
+// Subscribe notification events
+notifications
+  ?.onConnected((ev) => console.log('WS connected:', ev))
+  .onDisconnected((ev) => console.log('WS disconnected:', ev))
+  .onError((ev) => console.log('WS error:', ev))
+  .onImageUploaded((ev) => prependImgWithRoom(ev.room_id, ev.img_id))
+  .onImageDeleted((ev) => removeImgs(ev.room_id, ev.img_id))
+  .onLobbyDeleted((_) => emtpyLobby())
+  .onRoomDeleted((ev) => emtpyRoom(ev.room_id))
+  .onChatMessage((ev) => showChatMessage(ev.username, ev.msg))
+  .onSystemNotification((ev) => console.info(ev.msg_type, ev.msg)) ??
+  console.warn('Notifications not available');
+
 addButtonHandler();
 
 // HTML elements
 const roomSelect = document.getElementById('room-select')! as HTMLSelectElement;
 const lobbyEl = document.getElementById('lobby')!;
 const chatEl = document.getElementById('chat-messages')!;
-
-// Subscribe notification events
-function addNotifications(notify: Notifications) {
-  notify.onConnected((ev) => console.log('WS connected:', ev));
-  notify.onDisconnected((ev) => console.log('WS disconnected:', ev));
-  notify.onError((ev) => console.log('WS error:', ev));
-  notify.onImageUploaded((ev) => prependImgWithRoom(ev.room_id, ev.img_id));
-  notify.onImageDeleted((ev) => removeImgs(ev.room_id, ev.img_id));
-  notify.onLobbyDeleted((_) => emtpyLobby());
-  notify.onRoomDeleted((ev) => emtpyRoom(ev.room_id));
-  notify.onChatMessage((ev) => showChatMessage(ev.username, ev.msg));
-  notify.onSystemNotification((ev) => console.info(ev.msg_type, ev.msg));
-}
 
 function addButtonHandler() {
   const add = (id: string, handler: () => void) =>
@@ -119,8 +117,7 @@ async function uploadImage() {
     web_img_manager
       .upload_img(lobby_id, room_id, file)
       .then(({ img_id }) => {
-        if (web_img_manager.notifications == null)
-          prependImgWithRoom(room_id, img_id);
+        if (notifications == null) prependImgWithRoom(room_id, img_id);
       })
       .catch((err) => console.error(err));
   }

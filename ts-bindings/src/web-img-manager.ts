@@ -15,8 +15,6 @@ export type Protocol = 'http' | 'https';
 
 /** Class for communication with web img manager server. */
 export class WebImgManager {
-  notifications: Notifications | null = null;
-
   constructor(public server_addr: string, public protocol: Protocol = 'http') {}
 
   async get_room_img_list(
@@ -74,13 +72,12 @@ export class WebImgManager {
   connect(
     lobby_id: LobbyId,
     notifications_protocol: NotificationsProtocol = 'ws'
-  ): WebImgManager {
-    this.notifications = new Notifications(
+  ): Notifications {
+    return new Notifications(
       this.server_addr,
       lobby_id,
       notifications_protocol
     );
-    return this;
   }
 
   private async send<TRes>(
