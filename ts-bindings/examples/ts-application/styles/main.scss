@@ -41,3 +41,9 @@ body {
 #chat-messages {
   height: 100%;
 }
+
+#error-box {
+  display: none;
+  background-color: #f44336;
+  color: white;
+}

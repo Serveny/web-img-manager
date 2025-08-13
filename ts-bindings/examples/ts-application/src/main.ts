@@ -9,7 +9,7 @@ const notifications = web_img_manager.connect(lobby_id, 'ws');
 notifications
   ?.onConnected((ev) => console.log('WS connected:', ev))
   .onDisconnected((ev) => console.log('WS disconnected:', ev))
-  .onError((ev) => console.log('WS error:', ev))
+  .onError((ev) => showError(ev))
   .onImageUploaded((ev) => prependImgWithRoom(ev.room_id, ev.img_id))
   .onImageDeleted((ev) => removeImgs(ev.room_id, ev.img_id))
   .onLobbyDeleted((_) => emtpyLobby())
@@ -17,7 +17,6 @@ notifications
   .onChatMessage((ev) => showChatMessage(ev.username, ev.msg))
   .onSystemNotification((ev) => console.info(ev.msg_type, ev.msg)) ??
   console.warn('Notifications not available');
-
 addButtonHandler();
 
 // HTML elements
@@ -119,7 +118,7 @@ async function uploadImage() {
       .then(({ img_id }) => {
         if (notifications == null) prependImgWithRoom(room_id, img_id);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => showError(err));
   }
 }
 
@@ -158,4 +157,20 @@ function showChatMessage(username: string, msg: string) {
   msgEl.innerHTML = `<b>${username}:</b> ${msg}`;
   chatEl.append(msgEl);
   chatEl.scrollTop = chatEl.scrollHeight - chatEl.clientHeight;
+}
+
+let errorBoxTimeout: number | null = null;
+
+function showError(err: Error | any) {
+  console.error(err);
+  const errorBox = document.getElementById('error-box') as HTMLDivElement;
+  if (errorBoxTimeout != null) clearTimeout(errorBoxTimeout);
+  errorBox.textContent = err instanceof Error ? err.message : err.toString();
+  errorBox.style.display = 'block';
+
+  errorBoxTimeout = setTimeout(() => {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+    errorBoxTimeout = null;
+  }, 6000);
 }

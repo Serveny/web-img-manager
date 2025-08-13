@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@picocss/pico": "2.1.1",
-    "sass": "1.86.0",
-    "web-img-manager": "file:../../"
+    "sass": "1.90.0",
+    "web-img-manager": "1.4.0"
   },
   "devDependencies": {
-    "typescript": "5.8.2",
-    "vite": "6.2.3"
+    "typescript": "5.9.2",
+    "vite": "7.1.2"
   },
   "keywords": [
     "example",
