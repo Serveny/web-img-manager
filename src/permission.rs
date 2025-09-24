@@ -1,12 +1,10 @@
-use crate::{
-    public_messages::permission::ConfirmationResponse, utils::ParamTuple, LobbyId, RoomId,
-};
+use crate::{public_messages::permission::ConfirmationResponse, utils::ParamTuple};
+use Restriction::*;
 use actix_web::{HttpRequest, HttpResponse};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
-use Restriction::*;
 
 #[derive(Deserialize, Clone, Default, Debug)]
 pub struct Permissions {
@@ -161,12 +159,6 @@ impl ConfirmationRequest {
         }
         return Ok(headers);
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UploadConfirmationRequest {
-    lobby_id: LobbyId,
-    room_id: RoomId,
 }
 
 pub async fn check<T: ParamTuple>(

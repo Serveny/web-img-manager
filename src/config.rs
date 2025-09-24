@@ -42,10 +42,10 @@ impl Default for ServerConfig {
             permissions: Permissions::default(),
 
             #[cfg(feature = "openssl")]
-            cert_pem_path: Some(String::from("/wim_storage/cert/cert.pem")),
+            cert_pem_path: None, // Example: Some(String::from("/wim_storage/cert/cert.pem")),
 
             #[cfg(feature = "openssl")]
-            key_pem_path: Some(String::from("/wim_storage/cert/key.pem")),
+            key_pem_path: None, // Example: Some(String::from("/wim_storage/cert/key.pem")),
 
             upload_check: None,
         }

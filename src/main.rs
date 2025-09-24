@@ -1,16 +1,16 @@
 use actix::prelude::*;
 use actix_web::{
+    App, HttpResponse, HttpServer,
     error::InternalError,
     middleware::Logger,
     web::{Data, JsonConfig},
-    App, HttpResponse, HttpServer,
 };
 use api::{
     delete_img, delete_lobby, delete_room, get_img_big, get_img_thumb, get_room_img_list,
     get_room_list, handle_options, send_chat_message, test, upload_img,
 };
 use check::ImgChecker;
-use config::{cors_cfg, read_server_config, ServerConfig};
+use config::{ServerConfig, cors_cfg, read_server_config};
 use log::{error, info};
 use notification::server::NotifyServer;
 use uuid::Uuid;
@@ -108,7 +108,7 @@ async fn main() -> std::io::Result<()> {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Wrong configuration: cert.pem and key.pem needed.",
-            ))
+            ));
         }
     }?;
 

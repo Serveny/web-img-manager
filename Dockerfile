@@ -16,7 +16,7 @@ COPY Cargo.toml Cargo.lock /usr/src/web-img-manager/
 WORKDIR /usr/src/web-img-manager
 
 # This is a dummy build to get the dependencies cached.
-RUN cargo build --release
+RUN cargo build --release --features openssl
 
 # Now copy in the rest of the sources
 COPY src /usr/src/web-img-manager/src/
@@ -30,15 +30,15 @@ RUN cargo build --release --features openssl
 
 
 
-
 ################
 ##### Runtime
 ################
 
-FROM ubuntu:latest AS runtime 
+FROM cgr.dev/chainguard/wolfi-base:latest AS runtime 
 
-# Install nano & certificates
-RUN apt update && apt install -y nano ca-certificates && update-ca-certificates
+# Install openssl library, which provides required libssl.so.3 file.
+# The --no-cache flag to keep the final image size small.
+RUN apk update && apk add --no-cache openssl nano
 
 VOLUME "/wim-storage"
 
@@ -60,7 +60,7 @@ RUN ln -s /wim-storage/config/ /usr/local/bin/
 EXPOSE 1871 
 
 # Set workdir to folder with binary and config link
-WORKDIR /usr/local/bin/
+WORKDIR /app
 
 # Run the application
 CMD ["/usr/local/bin/web-img-manager"]

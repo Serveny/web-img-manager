@@ -1,15 +1,14 @@
-version: '3.4'
-
 services:
   webimgmanager:
     image: web-img-manager
+    container_name: webimgmanager
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
       - '1871:1871'
     volumes:
-      - wim-storage:/
+      - wim-storage:/wim-storage
 
 volumes:
   wim-storage:

@@ -1,12 +1,12 @@
 use crate::{ImgId, LobbyId, RoomId};
 use actix_multipart::form::tempfile::TempFile;
-use actix_web::{http::header, HttpResponse};
-use image::{imageops::FilterType, DynamicImage, GenericImageView, ImageFormat};
+use actix_web::{HttpResponse, http::header};
+use image::{DynamicImage, GenericImageView, ImageFormat, imageops::FilterType};
 use image_hasher::{HashAlg, HasherConfig, ImageHash};
 use log::info;
 use std::{
     cmp::Reverse,
-    fs::{self, create_dir_all, DirEntry, File},
+    fs::{self, DirEntry, File, create_dir_all},
     io::{BufReader, Error, Read},
     path::{Path, PathBuf},
     time::SystemTime,
@@ -95,7 +95,12 @@ pub fn save_img(
     // Check storage path
     let storage_path = Path::new(img_storage_path);
     if !storage_path.exists() {
-        return SaveImageResult::Err(format!("Storage not found: {img_storage_path}"));
+        if let Err(err) = create_dir_all(img_storage_path) {
+            return SaveImageResult::Err(format!(
+                "Can't create storage folder: {img_storage_path} - {}",
+                err.to_string()
+            ));
+        }
     }
 
     // Check image folder
