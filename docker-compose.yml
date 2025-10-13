@@ -9,6 +9,23 @@ services:
       - '1871:1871'
     volumes:
       - wim-storage:/wim-storage
+    environment:
+      # Example configuration
+      WIM_URL: 0.0.0.0
+      WIM_PORT: 1871
+      WIM_IMAGES_STORAGE_PATH: '/wim_storage/pictures'
+
+      # Permissions can be set here, but for readability maybe prefer json config
+      WIM_PERMISSIONS__GET_ROOM_LIST__RESTRICTION: 'AllowedToAll'
+      WIM_PERMISSIONS__DELETE_LOBBY__RESTRICTION: 'Denied'
+
+      WIM_MAX_IMAGE_SIZE_BYTE: 20971520
+      WIM_CERT_PEM_PATH: '/wim_storage/cert/cert.pem'
+      WIM_KEY_PEM_PATH: '/wim_storage/cert/key.pem'
+
+      WIM_UPLOAD_CHECK__CHECK_PHASE: 'AfterUpload'
+      WIM_UPLOAD_CHECK__URL: 'http://check.server.org'
+      WIM_UPLOAD_CHECK__NOT_ALLOWED_MSG: 'This image is not allowed'
 
 volumes:
   wim-storage:

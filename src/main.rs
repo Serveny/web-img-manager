@@ -1,3 +1,4 @@
+use crate::config::read_server_config;
 use actix::prelude::*;
 use actix_web::{
     App, HttpResponse, HttpServer,
@@ -10,8 +11,8 @@ use api::{
     get_room_list, handle_options, send_chat_message, test, upload_img,
 };
 use check::ImgChecker;
-use config::{ServerConfig, cors_cfg, read_server_config};
-use log::{error, info};
+use config::{ServerConfig, cors_cfg};
+use log::info;
 use notification::server::NotifyServer;
 use uuid::Uuid;
 
@@ -35,10 +36,7 @@ pub type ImgId = u32;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let server_cfg: Data<ServerConfig> = Data::new(read_server_config().unwrap_or_else(|err| {
-        error!("{err}. Using hardcoded default config instead");
-        ServerConfig::default()
-    }));
+    let server_cfg: Data<ServerConfig> = Data::new(read_server_config());
     let server = (server_cfg.url.clone(), server_cfg.port);
 
     #[cfg(feature = "openssl")]

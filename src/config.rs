@@ -1,10 +1,13 @@
 use crate::permission::Permissions;
 use actix_cors::Cors;
 use actix_web::http::header;
+use figment::Figment;
+use figment::providers::{Env, Format, Json};
+use log::error;
 use serde::Deserialize;
-use std::{env::current_dir, fs};
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct ServerConfig {
     // server url
     pub url: String,
@@ -52,28 +55,16 @@ impl Default for ServerConfig {
     }
 }
 
-pub fn read_server_config() -> Result<ServerConfig, String> {
-    let cfg_json = match fs::read_to_string("./config/server-config.json") {
-        Ok(cfg) => cfg,
-        Err(_) => match fs::read_to_string("./config/default-server-config.json") {
-            Ok(default_cfg) => {
-                println!("use default-server-config.json");
-                default_cfg
-            }
-            Err(err) => {
-                let dir = current_dir()
-                    .map_err(|err| err.to_string())?
-                    .join("./config/default-server-config.json");
-                let dir = dir.to_str().ok_or(String::from("Can't read config dir"))?;
-                return Err(format!("Can't read config file: {err} {dir}",));
-            }
-        },
-    };
-    let cfg = match serde_json::from_str(&cfg_json) {
-        Ok(cfg) => cfg,
-        Err(err) => return Err(format!("Invalid config json: {err}")),
-    };
-    Ok(cfg)
+pub fn read_server_config() -> ServerConfig {
+    Figment::new()
+        .merge(Json::file("./config/default-server-config.json"))
+        .merge(Json::file("./config/server-config.json"))
+        .merge(Env::prefixed("WIM_").split("__")) // highest prio
+        .extract()
+        .unwrap_or_else(|err| {
+            error!("{err}. Using hardcoded default config instead");
+            ServerConfig::default()
+        })
 }
 
 pub fn cors_cfg() -> Cors {

@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Clone, Default, Debug)]
+#[serde(default)]
 pub struct Permissions {
     pub get_room_list: Permission,
     pub get_room_img_list: Permission,
@@ -20,6 +21,7 @@ pub struct Permissions {
 }
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct Permission {
     restriction: Restriction,
     url_whitelist: Option<Vec<String>>,
