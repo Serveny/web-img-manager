@@ -2,7 +2,7 @@ use super::internal_messages::{
     ChatMessage, Connect, Disconnect, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted,
     SystemNotification,
 };
-use crate::{utils::ToOutputJsonString, LobbyId};
+use crate::{LobbyId, utils::ToOutputJsonString};
 use actix::prelude::*;
 use log::{debug, warn};
 use std::collections::{HashMap, HashSet};
@@ -57,7 +57,7 @@ impl Handler<Connect> for NotifyServer {
         // create a room if necessary, and then add the id to it
         self.lobbies
             .entry(msg.lobby_id)
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(msg.session_id);
 
         debug!("Lobbies: {:?}", self.lobbies);
@@ -82,7 +82,7 @@ impl Handler<Disconnect> for NotifyServer {
             .lobbies
             .iter_mut()
             .find(|lobby| lobby.1.contains(&msg.session_id))
-            .and_then(|lobby| lobby.1.remove(&msg.session_id).then(|| *lobby.0))
+            .and_then(|lobby| lobby.1.remove(&msg.session_id).then_some(*lobby.0))
         else {
             warn!("Session id to delete not in lobbies: {}", msg.session_id);
             return;

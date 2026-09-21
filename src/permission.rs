@@ -52,13 +52,14 @@ impl Permission {
         let referer = req
             .headers()
             .get("Referer")
-            .ok_or("No referer".to_string())?;
+            .ok_or_else(|| "No referer".to_string())?;
 
         let referer = referer.to_str().map_err(|err| err.to_string())?;
 
-        urls.contains(&referer.to_string())
-            .then(|| ())
-            .ok_or("Access from this url not allowed".to_string())
+        urls.iter()
+            .any(|url| url == referer)
+            .then_some(())
+            .ok_or_else(|| "Access from this url not allowed".to_string())
     }
 }
 
@@ -78,9 +79,9 @@ pub enum Restriction {
     Denied,
 }
 
-impl Restriction {
-    fn to_string(&self) -> String {
-        String::from(match self {
+impl std::fmt::Display for Restriction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
             AllowedToAll => "Allowed",
             NeedsConfirmation(_) => "Needs confirmation from other server",
             Denied => "Access denied",
@@ -134,13 +135,8 @@ impl ConfirmationRequest {
             .text()
             .await
             .map_err(|err| format!("Can't read confirmation response: {:?}", err))?;
-        let response: ConfirmationResponse = serde_json::from_str(&response).map_err(|err| {
-            format!(
-                "Can't parse confirmation response: {} | {}",
-                err.to_string(),
-                response
-            )
-        })?;
+        let response: ConfirmationResponse = serde_json::from_str(response)
+            .map_err(|err| format!("Can't parse confirmation response: {} | {}", err, response))?;
 
         match response.is_allowed {
             true => Ok(()),
@@ -159,7 +155,7 @@ impl ConfirmationRequest {
             let header_value = HeaderValue::from_str(&value).map_err(|err| err.to_string())?;
             headers.insert(header_name, header_value);
         }
-        return Ok(headers);
+        Ok(headers)
     }
 }
 
@@ -168,7 +164,7 @@ pub async fn check<T: ParamTuple>(
     req: &HttpRequest,
     params: &T,
 ) -> Option<HttpResponse> {
-    if let Err(msg) = permission.is_allowed(&req, params).await {
+    if let Err(msg) = permission.is_allowed(req, params).await {
         return Some(HttpResponse::Forbidden().body(msg));
     }
     None

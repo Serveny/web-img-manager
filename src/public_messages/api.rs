@@ -1,5 +1,5 @@
 use crate::{ImgId, LobbyId};
-use actix_multipart::form::{tempfile::TempFile, MultipartForm};
+use actix_multipart::form::{MultipartForm, tempfile::TempFile};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 

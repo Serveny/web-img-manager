@@ -1,11 +1,11 @@
 use crate::{
+    ImgId, LobbyId, RoomId, SessionId,
     config::ServerConfig,
     img::{delete_img_files, img_id_to_filename},
     notification::{
         internal_messages::{ImageDeleted, SystemNotification, SystemNotificationType},
         server::NotifyServer,
     },
-    ImgId, LobbyId, RoomId, SessionId,
 };
 use actix::prelude::*;
 use actix_web::web::Data;
@@ -132,5 +132,5 @@ pub async fn check_image(
         .send()
         .await
         .map_err(|err| format!("{err:?}"))?;
-    Ok(res.json::<bool>().await.map_err(|err| format!("{err:?}"))?)
+    res.json::<bool>().await.map_err(|err| format!("{err:?}"))
 }

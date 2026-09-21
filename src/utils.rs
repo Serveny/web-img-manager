@@ -1,6 +1,6 @@
 use crate::{ImgId, LobbyId, RoomId, SessionId};
 use actix_web::HttpRequest;
-use serde_json::{from_value, Value};
+use serde_json::{Value, from_value};
 use std::{
     collections::HashMap,
     fs::{self, DirEntry},
@@ -22,7 +22,7 @@ pub fn get_foldernames_as_uuid(folder_path: &PathBuf) -> Vec<RoomId> {
     fs::read_dir(folder_path)
         .ok()
         .map(|entries| entries.filter_map(entry_to_room_id).collect())
-        .unwrap_or_else(Vec::new)
+        .unwrap_or_default()
 }
 
 pub fn rename_with_value<T: Into<Value>>(map: &mut HashMap<String, Value>, key: &str, val: T) {

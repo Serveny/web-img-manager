@@ -1,3 +1,3 @@
 pub mod api;
-pub mod ws;
 pub mod permission;
+pub mod ws;

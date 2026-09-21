@@ -94,13 +94,13 @@ pub fn save_img(
 ) -> SaveImageResult {
     // Check storage path
     let storage_path = Path::new(img_storage_path);
-    if !storage_path.exists() {
-        if let Err(err) = create_dir_all(img_storage_path) {
-            return SaveImageResult::Err(format!(
-                "Can't create storage folder: {img_storage_path} - {}",
-                err.to_string()
-            ));
-        }
+    if !storage_path.exists()
+        && let Err(err) = create_dir_all(img_storage_path)
+    {
+        return SaveImageResult::Err(format!(
+            "Can't create storage folder: {img_storage_path} - {}",
+            err
+        ));
     }
 
     // Check image folder

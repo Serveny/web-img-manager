@@ -1,7 +1,10 @@
 /target/
 /img-test-storage/*
+/wim-storage
 .DS_Store
 /cert/
 
 /config/server-config*
 package-lock.json
+
+ts-bindings/src/bindings/

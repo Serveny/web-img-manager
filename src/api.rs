@@ -1,9 +1,10 @@
 use crate::{
-    check::{check_image, ImgCheck, ImgChecker},
+    ImgId, LobbyId, RoomId,
+    check::{ImgCheck, ImgChecker, check_image},
     config::{CheckPhase, ServerConfig},
     img::{
-        delete_img_files, get_filenames_as_img_id, get_img, read_img, resize_image, save_img,
-        ImgType, SaveImageResult,
+        ImgType, SaveImageResult, delete_img_files, get_filenames_as_img_id, get_img, read_img,
+        resize_image, save_img,
     },
     notification::{
         internal_messages::{ChatMessage, ImageDeleted, ImageUploaded, LobbyDeleted, RoomDeleted},
@@ -12,16 +13,14 @@ use crate::{
     permission::check,
     public_messages::api::{ChatMessageRequest, Success, UploadRequest, UploadResult},
     utils::{get_foldernames_as_uuid, get_session_id},
-    ImgId, LobbyId, RoomId,
 };
 use actix::prelude::*;
 use actix_multipart::form::MultipartForm;
 use actix_web::{
-    get,
+    HttpRequest, HttpResponse, Responder, get,
     http::header,
     options, post,
     web::{self, Data, Json},
-    HttpRequest, HttpResponse, Responder,
 };
 use log::{debug, warn};
 use std::{fs, path::Path};
@@ -144,23 +143,23 @@ pub async fn upload_img(
     let thumb_img = resize_image(img.clone(), 600, 200);
 
     // At upload check
-    if let Some(check) = &cfg.upload_check {
-        if check.check_phase == CheckPhase::BeforeUpload {
-            match check_image(&check.url, thumb_img.clone(), None).await {
-                Ok(is_allowed) => {
-                    if !is_allowed {
-                        return HttpResponse::Forbidden().body(
-                            check
-                                .not_allowed_msg
-                                .as_ref()
-                                .map_or("This image is not allowed".into(), |msg| msg.clone()),
-                        );
-                    }
+    if let Some(check) = &cfg.upload_check
+        && check.check_phase == CheckPhase::BeforeUpload
+    {
+        match check_image(&check.url, thumb_img.clone(), None).await {
+            Ok(is_allowed) => {
+                if !is_allowed {
+                    return HttpResponse::Forbidden().body(
+                        check
+                            .not_allowed_msg
+                            .as_ref()
+                            .map_or("This image is not allowed".into(), |msg| msg.clone()),
+                    );
                 }
-                Err(err_msg) => {
-                    return HttpResponse::InternalServerError()
-                        .body(format!("Upload check failed: {err_msg}"))
-                }
+            }
+            Err(err_msg) => {
+                return HttpResponse::InternalServerError()
+                    .body(format!("Upload check failed: {err_msg}"));
             }
         }
     }
@@ -177,22 +176,22 @@ pub async fn upload_img(
         SaveImageResult::ImageAlreadyExists(img_id) => {
             return HttpResponse::Ok()
                 .insert_header((header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
-                .json(UploadResult { img_id })
+                .json(UploadResult { img_id });
         }
         SaveImageResult::Err(err_msg) => return HttpResponse::InternalServerError().body(err_msg),
     };
 
     // After upload check
-    if let Some(check) = &cfg.upload_check {
-        if check.check_phase == CheckPhase::AfterUpload {
-            checker.do_send(ImgCheck::new(
-                thumb_img,
-                lobby_id,
-                room_id,
-                img_id,
-                get_session_id(&req),
-            ));
-        }
+    if let Some(check) = &cfg.upload_check
+        && check.check_phase == CheckPhase::AfterUpload
+    {
+        checker.do_send(ImgCheck::new(
+            thumb_img,
+            lobby_id,
+            room_id,
+            img_id,
+            get_session_id(&req),
+        ));
     }
 
     // Notify users

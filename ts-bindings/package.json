@@ -9,7 +9,8 @@
     "build": "tsc --build"
   },
   "devDependencies": {
-    "typescript": "5.9.2"
+    "rimraf": "6.1.3",
+    "typescript": "7.0.2"
   },
   "keywords": [
     "bindings",

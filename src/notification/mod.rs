@@ -1,15 +1,15 @@
-use crate::{utils::SESSION_COOKIE_NAME, LobbyId, SessionId};
+use crate::{LobbyId, SessionId, utils::SESSION_COOKIE_NAME};
 use actix::prelude::*;
 use actix_web::{
+    Error, HttpRequest, HttpResponse,
     cookie::{Cookie, SameSite},
     get,
     web::{Data, Path, Payload},
-    Error, HttpRequest, HttpResponse,
 };
 use actix_ws::AggregatedMessage;
 use futures_util::{
-    future::{select, Either},
     StreamExt as _,
+    future::{Either, select},
 };
 use internal_messages::{Connect, Disconnect};
 use server::NotifyServer;
